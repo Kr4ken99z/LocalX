@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #080f1c;
+    color: #f1f5f9;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #080f1c;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Glassmorphic cards and glows */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(51, 65, 85, 0.65);
+}
+
+.glass-panel-hover {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.glass-panel-hover:hover {
+  border-color: rgba(45, 212, 191, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px -10px rgba(45, 212, 191, 0.15);
+}
+
+.glow-teal {
+  box-shadow: 0 0 25px -5px rgba(45, 212, 191, 0.35);
+}
+
+.glow-violet {
+  box-shadow: 0 0 25px -5px rgba(139, 92, 246, 0.35);
+}
+
+.hero-gradient {
+  background: radial-gradient(circle at 50% 20%, rgba(45, 212, 191, 0.12) 0%, rgba(139, 92, 246, 0.08) 35%, transparent 70%);
+}
+
+/* Leaflet map dark mode invert filter for dark theme */
+.dark-map .leaflet-tile {
+  filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+}
+
+/* Background video styles matching demo */
+.page-bg-video {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.58 !important;
+  filter: saturate(1.12) contrast(1.08) brightness(1.06);
+}
+
+.page-video-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: radial-gradient(circle at 50% 30%, rgba(8, 15, 28, 0.4) 0%, rgba(8, 15, 28, 0.88) 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.page-content-wrapper {
+  position: relative;
+  z-index: 10;
+}

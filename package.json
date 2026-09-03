@@ -1,0 +1,23 @@
+{
+  "name": "localx",
+  "version": "1.0.0",
+  "description": "LocalX - Hyperlocal Service Marketplace MVP",
+  "private": true,
+  "scripts": {
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm run dev",
+    "dev": "node -e \"const { spawn } = require('child_process'); const run = (cmd, dir) => spawn(cmd, { shell: true, stdio: 'inherit', cwd: dir }); run('npm run dev', './server'); run('npm run dev', './client');\"",
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install",
+    "seed": "cd server && npm run seed"
+  },
+  "keywords": [
+    "hyperlocal",
+    "marketplace",
+    "services",
+    "mern",
+    "socketio",
+    "leaflet"
+  ],
+  "author": "LocalX Team",
+  "license": "ISC"
+}

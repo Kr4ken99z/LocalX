@@ -1,0 +1,448 @@
+import React, { useState, useEffect } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
+import axios from 'axios';
+import {
+  Search,
+  Filter,
+  MapPin,
+  Star,
+  ShieldCheck,
+  CheckCircle2,
+  Map as MapIcon,
+  Grid,
+  ArrowUpDown,
+  SlidersHorizontal,
+  X,
+  Crosshair,
+} from 'lucide-react';
+import { detectSmartLocation } from '../utils/locationHelper';
+import TrustScoreBadge from '../components/TrustScoreBadge';
+import LeafletMap from '../components/LeafletMap';
+import BookingModal from '../components/BookingModal';
+
+const cityCoordinatesMap = {
+  Kolkata: [22.5726, 88.3639],
+  Bengaluru: [12.9716, 77.5946],
+  Mumbai: [19.0760, 72.8777],
+  'Delhi NCR': [28.6139, 77.2090],
+  Hyderabad: [17.3850, 78.4867],
+  Pune: [18.5204, 73.8567],
+};
+
+export default function ExplorePage({ selectedCity = 'Kolkata', onSelectCity }) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [professionals, setProfessionals] = useState([]);
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Filters State
+  const initialCity = searchParams.get('city') || selectedCity || 'Kolkata';
+  const [city, setCity] = useState(initialCity);
+  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [selectedService, setSelectedService] = useState(searchParams.get('service') || 'all');
+  const [radius, setRadius] = useState(25); // km
+  const [minRating, setMinRating] = useState(0);
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [sortBy, setSortBy] = useState('trustScore');
+  const [viewMode, setViewMode] = useState('both'); // 'both', 'grid', 'map'
+  const [mapCenter, setMapCenter] = useState(cityCoordinatesMap[initialCity] || [22.5726, 88.3639]);
+  const [isLocating, setIsLocating] = useState(false);
+
+  // Booking Modal
+  const [activeBookingPro, setActiveBookingPro] = useState(null);
+
+  const demoCities = ['Kolkata', 'Bengaluru', 'Mumbai', 'Delhi NCR', 'Hyderabad', 'Pune'];
+
+  useEffect(() => {
+    // Fetch categories
+    axios.get('/api/services').then((res) => {
+      if (res.data.success) setServices(res.data.data);
+    });
+  }, []);
+
+  useEffect(() => {
+    const fetchProfessionals = async () => {
+      setLoading(true);
+      try {
+        const params = {
+          city: city !== 'all' ? city : undefined,
+          search: search || undefined,
+          service: selectedService !== 'all' ? selectedService : undefined,
+          rating: minRating > 0 ? minRating : undefined,
+          verifiedOnly: verifiedOnly ? 'true' : undefined,
+          sort: sortBy,
+        };
+
+        const res = await axios.get('/api/professionals', { params });
+        if (res.data.success) {
+          // If city filter returned 0 (e.g. newly typed city), also offer fallback
+          if (res.data.data.length === 0 && search) {
+            const fallbackRes = await axios.get('/api/professionals', {
+              params: { search, service: selectedService !== 'all' ? selectedService : undefined, sort: sortBy },
+            });
+            if (fallbackRes.data.success) setProfessionals(fallbackRes.data.data);
+          } else {
+            setProfessionals(res.data.data);
+          }
+        }
+      } catch (err) {
+        console.error('Fetch professionals error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfessionals();
+  }, [city, search, selectedService, minRating, verifiedOnly, sortBy]);
+
+  // Sync city coordinates when city changes
+  useEffect(() => {
+    if (cityCoordinatesMap[city]) {
+      setMapCenter(cityCoordinatesMap[city]);
+    }
+  }, [city]);
+
+  const handleUseMyLocation = async () => {
+    setIsLocating(true);
+    try {
+      const loc = await detectSmartLocation();
+      setCity(loc.city);
+      setMapCenter(loc.coordinates);
+      if (onSelectCity) onSelectCity(loc.city);
+
+      // Attempt nearby query around coordinates
+      const [lat, lng] = loc.coordinates;
+      const res = await axios.get(`/api/professionals/nearby?lat=${lat}&lng=${lng}&radius=${radius}`);
+      if (res.data.success && res.data.data.length > 0) {
+        setProfessionals(res.data.data);
+      }
+    } catch (e) {
+      setCity('Kolkata');
+      setMapCenter(cityCoordinatesMap['Kolkata']);
+    } finally {
+      setIsLocating(false);
+    }
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      {/* Top Filter Bar */}
+      <div className="glass-panel p-4 rounded-2xl space-y-4">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
+          {/* Search Input */}
+          <div className="relative flex-1 w-full">
+            <Search className="w-4 h-4 text-teal-400 absolute left-3.5 top-3" />
+            <input
+              type="text"
+              placeholder="Search by specialist name, skills, or service title..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 text-xs rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:border-teal-400"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Quick Filters */}
+          <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto text-xs">
+            {/* City Selector */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-800">
+              <MapPin className="w-3.5 h-3.5 text-teal-400 shrink-0" />
+              <select
+                value={city}
+                onChange={(e) => {
+                  setCity(e.target.value);
+                  if (onSelectCity) onSelectCity(e.target.value);
+                }}
+                aria-label="Location City"
+                className="bg-transparent text-white font-bold focus:outline-none cursor-pointer pr-1"
+              >
+                <option value="all">All Locations</option>
+                {demoCities.map((c) => (
+                  <option key={c} value={c} className="bg-slate-900 text-white font-medium">
+                    {c}
+                  </option>
+                ))}
+                {city && !demoCities.includes(city) && city !== 'all' && (
+                  <option value={city} className="bg-slate-900 text-teal-300 font-semibold">
+                    📍 {city}
+                  </option>
+                )}
+              </select>
+            </div>
+
+            {/* Use My Location Button */}
+            <button
+              type="button"
+              onClick={handleUseMyLocation}
+              disabled={isLocating}
+              title="Detect and center map on my GPS location"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/40 text-teal-300 font-bold transition shrink-0"
+            >
+              <Crosshair className={`w-3.5 h-3.5 text-teal-400 ${isLocating ? 'animate-spin' : ''}`} />
+              <span>{isLocating ? 'Locating...' : 'Use my location'}</span>
+            </button>
+
+            {/* Verified Only Toggle */}
+            <button
+              type="button"
+              onClick={() => setVerifiedOnly(!verifiedOnly)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border transition ${
+                verifiedOnly
+                  ? 'bg-teal-500/20 border-teal-500/50 text-teal-300 font-semibold'
+                  : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4 text-teal-400" />
+              <span>Verified Only</span>
+            </button>
+
+            {/* Rating Filter */}
+            <select
+              value={minRating}
+              onChange={(e) => setMinRating(Number(e.target.value))}
+              aria-label="Filter by minimum rating"
+              className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 focus:outline-none focus:border-teal-400"
+            >
+              <option value={0}>All Ratings</option>
+              <option value={4.5}>4.5★ and above</option>
+              <option value={4.0}>4.0★ and above</option>
+            </select>
+
+            {/* Sort Filter */}
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              aria-label="Sort professionals by"
+              className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 focus:outline-none focus:border-teal-400"
+            >
+              <option value="trustScore">Highest Trust Score</option>
+              <option value="rating">Top Customer Rating</option>
+              <option value="experience">Years of Experience</option>
+              <option value="reviews">Most Reviewed</option>
+            </select>
+
+            {/* View Mode Toggle */}
+            <div className="hidden sm:flex items-center rounded-xl bg-slate-950 border border-slate-800 p-1">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-1.5 rounded-lg ${viewMode === 'grid' ? 'bg-slate-800 text-teal-400' : 'text-slate-400'}`}
+                title="Grid View"
+              >
+                <Grid className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('map')}
+                className={`p-1.5 rounded-lg ${viewMode === 'map' ? 'bg-slate-800 text-teal-400' : 'text-slate-400'}`}
+                title="Map View"
+              >
+                <MapIcon className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('both')}
+                className={`p-1.5 rounded-lg ${viewMode === 'both' ? 'bg-slate-800 text-teal-400' : 'text-slate-400'}`}
+                title="Split Map & Grid"
+              >
+                <SlidersHorizontal className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Category Filter Pills */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+          <button
+            onClick={() => setSelectedService('all')}
+            className={`px-3 py-1 rounded-full font-medium shrink-0 transition ${
+              selectedService === 'all'
+                ? 'bg-teal-400 text-slate-950 font-bold'
+                : 'bg-slate-950 border border-slate-800 text-slate-300 hover:border-slate-700'
+            }`}
+          >
+            All Services
+          </button>
+          {services.map((s) => (
+            <button
+              key={s._id}
+              onClick={() => setSelectedService(s.slug)}
+              className={`px-3 py-1 rounded-full font-medium shrink-0 transition flex items-center gap-1.5 ${
+                selectedService === s.slug
+                  ? 'bg-teal-400 text-slate-950 font-bold'
+                  : 'bg-slate-950 border border-slate-800 text-slate-300 hover:border-slate-700'
+              }`}
+            >
+              <span>{s.icon}</span>
+              <span>{s.name}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className={`grid gap-6 ${viewMode === 'both' ? 'grid-cols-1 lg:grid-cols-12' : 'grid-cols-1'}`}>
+        {/* Map Column (if 'map' or 'both') */}
+        {(viewMode === 'both' || viewMode === 'map') && (
+          <div className={viewMode === 'both' ? 'lg:col-span-5 order-2 lg:order-1' : 'w-full'}>
+            <div className="sticky top-28 space-y-2">
+              <div className="flex items-center justify-between text-xs text-slate-400 px-1">
+                <span>Interactive Map ({city === 'all' ? 'All India' : city})</span>
+                <span className="text-teal-400 font-semibold">{professionals.length} specialists</span>
+              </div>
+              <LeafletMap
+                professionals={professionals}
+                center={mapCenter}
+                zoom={12}
+                height={viewMode === 'map' ? '650px' : '550px'}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Professionals Grid Column */}
+        {(viewMode === 'both' || viewMode === 'grid') && (
+          <div className={viewMode === 'both' ? 'lg:col-span-7 order-1 lg:order-2 space-y-4' : 'space-y-4'}>
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              <p>
+                Showing <strong className="text-white">{professionals.length}</strong> verified specialists in{' '}
+                <span className="text-teal-400 font-semibold">{city === 'all' ? 'All Locations' : city}</span>
+              </p>
+            </div>
+
+            {loading ? (
+              <div className="grid grid-cols-1 gap-4">
+                {[1, 2, 3].map((n) => (
+                  <div key={n} className="glass-panel p-5 rounded-2xl animate-pulse h-36"></div>
+                ))}
+              </div>
+            ) : professionals.length === 0 ? (
+              <div className="glass-panel p-12 rounded-2xl text-center space-y-3">
+                <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
+                  <Search className="w-6 h-6" />
+                </div>
+                <h3 className="font-bold text-white text-base">No specialists found in {city}</h3>
+                <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                  Try switching to another city (like Kolkata or Bengaluru) or resetting filters.
+                </p>
+                <div className="flex items-center justify-center gap-2 pt-1">
+                  <button
+                    onClick={() => {
+                      setCity('Kolkata');
+                      setSearch('');
+                      setSelectedService('all');
+                      setMinRating(0);
+                      setVerifiedOnly(false);
+                    }}
+                    className="px-4 py-2 rounded-xl bg-teal-400 text-slate-950 text-xs font-bold shadow"
+                  >
+                    View Kolkata Specialists
+                  </button>
+                  <button
+                    onClick={() => {
+                      setCity('all');
+                      setSearch('');
+                      setSelectedService('all');
+                    }}
+                    className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold"
+                  >
+                    View All
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                {professionals.map((pro) => (
+                  <div
+                    key={pro._id}
+                    className="glass-panel glass-panel-hover p-5 rounded-2xl flex flex-col sm:flex-row justify-between gap-4"
+                  >
+                    <div className="flex items-start gap-4">
+                      <img
+                        src={pro.userId?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'}
+                        alt={pro.businessName}
+                        className="w-16 h-16 rounded-2xl object-cover border-2 border-teal-500/30 shrink-0"
+                      />
+                      <div className="space-y-1.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Link
+                            to={`/professionals/${pro._id}`}
+                            className="font-extrabold text-white text-sm hover:text-teal-300 transition"
+                          >
+                            {pro.businessName}
+                          </Link>
+                          {pro.verificationStatus === 'VERIFIED' && (
+                            <span className="flex items-center gap-1 text-[10px] font-bold text-teal-400 bg-teal-500/10 px-2 py-0.5 rounded-full border border-teal-500/30">
+                              <CheckCircle2 className="w-3 h-3" />
+                              VERIFIED PRO
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="text-xs text-slate-300 line-clamp-1">{pro.tagline || pro.description}</p>
+
+                        <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-400">
+                          <span className="flex items-center gap-1 font-semibold text-amber-400">
+                            <Star className="w-3 h-3 fill-amber-400" />
+                            {pro.rating || 4.8} ({pro.totalReviews || 12} reviews)
+                          </span>
+                          <span>•</span>
+                          <span className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3 text-teal-400" />
+                            {pro.location?.address || pro.location?.city || 'Kolkata'}
+                          </span>
+                          <span>•</span>
+                          <span>{pro.experienceYears || 5} yrs exp</span>
+                        </div>
+
+                        <div className="pt-1">
+                          <TrustScoreBadge score={pro.trustScore || 85} tier={pro.trustTier || 'Rising Pro'} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-800 gap-2 shrink-0">
+                      <div className="text-left sm:text-right">
+                        <span className="text-[10px] text-slate-400 block">Starting at</span>
+                        <span className="text-lg font-extrabold text-teal-400">
+                          ₹{pro.services?.[0]?.price || 299}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          to={`/professionals/${pro._id}`}
+                          className="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-700 hover:border-slate-600 text-slate-200 text-xs font-semibold transition"
+                        >
+                          Profile
+                        </Link>
+                        <button
+                          onClick={() => setActiveBookingPro(pro)}
+                          className="px-3.5 py-1.5 rounded-xl bg-teal-400 hover:bg-teal-300 text-slate-950 text-xs font-bold transition shadow-md shadow-teal-500/20"
+                        >
+                          Book Now
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Booking Modal */}
+      {activeBookingPro && (
+        <BookingModal
+          professional={activeBookingPro}
+          onClose={() => setActiveBookingPro(null)}
+          onSuccess={() => setActiveBookingPro(null)}
+        />
+      )}
+    </div>
+  );
+}
