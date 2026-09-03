@@ -22,6 +22,11 @@ import {
   UserPlus,
   Crown,
   LogOut,
+  Key,
+  Eye,
+  EyeOff,
+  Lock,
+  Copy,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { FALLBACK_PROS, FALLBACK_CATEGORIES } from '../../utils/mockData';
@@ -44,6 +49,8 @@ const INITIAL_DEMO_USERS = [
     name: 'Koustav Mondal (Master Owner)',
     email: 'admin@localx.app',
     role: 'admin',
+    adminId: 'MASTER-OWNER-001',
+    password: 'password123',
     status: 'active',
     phone: '+91 98765 43210',
     city: 'Kolkata',
@@ -54,6 +61,8 @@ const INITIAL_DEMO_USERS = [
     name: 'Vikram Malhotra (Operations Lead)',
     email: 'vikram.admin@localx.app',
     role: 'admin',
+    adminId: 'ADM-KOLKATA-002',
+    password: 'adminOps#2026',
     status: 'active',
     phone: '+91 98311 22334',
     city: 'Kolkata',
@@ -200,18 +209,16 @@ export default function AdminDashboard() {
   const [professionals, setProfessionals] = useState(() => {
     try {
       const saved = localStorage.getItem('localx_admin_pros');
-      const loaded = saved ? JSON.parse(saved) : INITIAL_DEMO_PROS;
-      return loaded.map((p) => ({
-        ...p,
-        userId: {
-          ...p.userId,
-          avatar: `/avatars/${p._id}.jpg`,
-        },
-      }));
+      return saved ? JSON.parse(saved) : INITIAL_DEMO_PROS;
     } catch {
       return INITIAL_DEMO_PROS;
     }
   });
+
+  // Master Control Security State for inspecting Admin credentials
+  const [selectedAdminForCredentials, setSelectedAdminForCredentials] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [copiedText, setCopiedText] = useState('');
 
   const [usersList, setUsersList] = useState(() => {
     try {
@@ -610,8 +617,15 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="glass-panel p-5 rounded-2xl space-y-1">
               <span className="text-slate-400 font-medium">Total Registered Users</span>
-              <p className="text-2xl font-extrabold text-white">{metrics?.totalCustomers || 0}</p>
-              <span className="text-[11px] text-teal-400 font-semibold">Customers</span>
+              <p className="text-2xl font-extrabold text-white">
+                {usersList.filter((u) => u.role === 'customer').length}
+              </p>
+              <span className="text-[11px] text-teal-400 font-semibold">
+                {usersList.filter((u) => u.role === 'customer').length === 1
+                  ? '1 Customer'
+                  : `${usersList.filter((u) => u.role === 'customer').length} Customers`}{' '}
+                ({usersList.length} Total Accounts)
+              </span>
             </div>
             <div className="glass-panel p-5 rounded-2xl space-y-1">
               <span className="text-slate-400 font-medium">Verified Professionals</span>
@@ -909,6 +923,30 @@ export default function AdminDashboard() {
                         </span>
                       </td>
                       <td className="text-right space-x-2">
+                        {u.role === 'admin' && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedAdminForCredentials(u);
+                              setShowPassword(false);
+                              setCopiedText('');
+                            }}
+                            className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 transition inline-flex items-center gap-1 shadow-sm"
+                            title="Master Security: Inspect Admin Credentials & Passcode"
+                          >
+                            <Key className="w-3.5 h-3.5 text-amber-400" />
+                            <span>View Admin ID & Passcode</span>
+                          </button>
+                        )}
+                        {u.role !== 'admin' && (
+                          <span
+                            className="text-[10px] text-slate-400 font-medium italic border border-slate-800/80 px-2 py-0.5 rounded-md bg-slate-950/80 inline-flex items-center gap-1"
+                            title="Customer and Professional credentials are end-to-end encrypted and confidential"
+                          >
+                            <Lock className="w-3 h-3 text-slate-400" />
+                            <span>Confidential ID</span>
+                          </span>
+                        )}
                         {!isMasterOwner && (
                           <>
                             <button
@@ -1197,6 +1235,121 @@ export default function AdminDashboard() {
                 )}
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* MASTER SECURITY MODAL: ADMIN CREDENTIALS INSPECTOR */}
+      {selectedAdminForCredentials && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="max-w-md w-full rounded-3xl bg-[#0b1322] border border-amber-500/40 shadow-2xl overflow-hidden p-6 space-y-5">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                  <Crown className="w-5 h-5 fill-amber-400" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-white flex items-center gap-1.5">
+                    <span>Admin Security Credentials</span>
+                    <span className="text-[10px] bg-amber-500/20 text-amber-300 font-bold px-2 py-0.5 rounded border border-amber-500/30 uppercase">
+                      Master Clearance
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-400">Confidential governance access for Master Owner Koustav Mondal.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedAdminForCredentials(null)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Admin Info Card */}
+            <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-3 text-xs">
+              <div className="flex items-center gap-3">
+                <img
+                  src={selectedAdminForCredentials.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80'}
+                  alt=""
+                  className="w-12 h-12 rounded-xl object-cover border border-amber-500/40"
+                />
+                <div>
+                  <h4 className="font-extrabold text-white text-sm">{selectedAdminForCredentials.name}</h4>
+                  <p className="text-slate-400 font-mono text-[11px]">{selectedAdminForCredentials.email}</p>
+                  <span className="inline-block mt-0.5 text-[10px] font-bold text-teal-400 uppercase tracking-wider">
+                    Role: {selectedAdminForCredentials.role} · Scope: {selectedAdminForCredentials.city || 'Kolkata'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800 text-[11px]">
+                <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                  <span className="text-slate-400 block text-[10px]">Admin Identifier</span>
+                  <span className="font-mono font-bold text-amber-300">
+                    {selectedAdminForCredentials.adminId || `ADM-${selectedAdminForCredentials._id.slice(-6).toUpperCase()}`}
+                  </span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                  <span className="text-slate-400 block text-[10px]">Security Clearance</span>
+                  <span className="font-bold text-teal-300">Tier-2 Ops Admin</span>
+                </div>
+              </div>
+
+              {/* Password / Passcode Box */}
+              <div className="p-3.5 rounded-xl bg-slate-950 border border-amber-500/30 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-300 flex items-center gap-1">
+                    <Key className="w-3.5 h-3.5 text-amber-400" />
+                    Admin Login Password
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="text-[11px] text-teal-400 hover:text-teal-300 font-semibold flex items-center gap-1"
+                  >
+                    {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    <span>{showPassword ? 'Hide' : 'Reveal'}</span>
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-[#091120] border border-slate-800">
+                  <span className="font-mono text-xs font-extrabold text-white tracking-wider">
+                    {showPassword
+                      ? (selectedAdminForCredentials.password || 'adminOps#2026')
+                      : '••••••••••••'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(selectedAdminForCredentials.password || 'adminOps#2026');
+                      setCopiedText('Password copied!');
+                      setTimeout(() => setCopiedText(''), 2500);
+                    }}
+                    className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold flex items-center gap-1 transition"
+                  >
+                    <Copy className="w-3 h-3" />
+                    <span>{copiedText || 'Copy'}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Confidentiality Notice */}
+            <div className="p-3 rounded-2xl bg-teal-500/10 border border-teal-500/30 text-[11px] text-teal-200 leading-relaxed flex items-start gap-2">
+              <Lock className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
+              <span>
+                <strong>Confidentiality Guarantee:</strong> Customer and Professional personal credentials, passwords, and private identifiers remain strictly encrypted and non-accessible under the platform privacy policy.
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setSelectedAdminForCredentials(null)}
+              className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition"
+            >
+              Close Security View
+            </button>
           </div>
         </div>
       )}

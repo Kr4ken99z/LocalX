@@ -29,7 +29,7 @@ export default function HomePage({ selectedCity = 'Kolkata', onSelectCity }) {
   const [loading, setLoading] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
 
-  const demoCities = ['Kolkata', 'Bengaluru', 'Mumbai', 'Delhi NCR', 'Hyderabad', 'Pune'];
+  const demoCities = ['Kolkata', 'Bengaluru', 'Delhi NCR', 'Mumbai', 'Hyderabad', 'Chennai', 'Pune'];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -48,11 +48,17 @@ export default function HomePage({ selectedCity = 'Kolkata', onSelectCity }) {
         if (prosRes?.data?.success && prosRes.data.data?.length > 0) {
           setFeaturedPros(prosRes.data.data.slice(0, 4));
         } else {
-          setFeaturedPros(FALLBACK_PROS.slice(0, 4));
+          const cityPros = FALLBACK_PROS.filter(
+            (p) => p.location?.city?.toLowerCase() === selectedCity.toLowerCase()
+          );
+          setFeaturedPros(cityPros.length > 0 ? cityPros.slice(0, 4) : FALLBACK_PROS.slice(0, 4));
         }
       } catch (err) {
         setServices(FALLBACK_CATEGORIES);
-        setFeaturedPros(FALLBACK_PROS.slice(0, 4));
+        const cityPros = FALLBACK_PROS.filter(
+          (p) => p.location?.city?.toLowerCase() === selectedCity.toLowerCase()
+        );
+        setFeaturedPros(cityPros.length > 0 ? cityPros.slice(0, 4) : FALLBACK_PROS.slice(0, 4));
       } finally {
         setLoading(false);
       }

@@ -28,6 +28,7 @@ const cityCoordinatesMap = {
   Mumbai: [19.0760, 72.8777],
   'Delhi NCR': [28.6139, 77.2090],
   Hyderabad: [17.3850, 78.4867],
+  Chennai: [13.0827, 80.2707],
   Pune: [18.5204, 73.8567],
 };
 
@@ -54,7 +55,16 @@ export default function ExplorePage({ selectedCity = 'Kolkata', onSelectCity }) 
   // Booking Modal
   const [activeBookingPro, setActiveBookingPro] = useState(null);
 
-  const demoCities = ['Kolkata', 'Bengaluru', 'Mumbai', 'Delhi NCR', 'Hyderabad', 'Pune'];
+  const demoCities = ['All Cities', 'Kolkata', 'Bengaluru', 'Delhi NCR', 'Mumbai', 'Hyderabad', 'Chennai', 'Pune'];
+
+  useEffect(() => {
+    if (selectedCity && selectedCity !== city) {
+      setCity(selectedCity);
+      if (cityCoordinatesMap[selectedCity]) {
+        setMapCenter(cityCoordinatesMap[selectedCity]);
+      }
+    }
+  }, [selectedCity]);
 
   useEffect(() => {
     // Fetch categories
@@ -70,7 +80,7 @@ export default function ExplorePage({ selectedCity = 'Kolkata', onSelectCity }) 
       setLoading(true);
       try {
         const params = {
-          city: city !== 'all' ? city : undefined,
+          city: city !== 'all' && city !== 'All Cities' ? city : undefined,
           search: search || undefined,
           service: selectedService !== 'all' ? selectedService : undefined,
           rating: minRating > 0 ? minRating : undefined,
@@ -82,8 +92,11 @@ export default function ExplorePage({ selectedCity = 'Kolkata', onSelectCity }) 
         if (res?.data?.success && res.data.data?.length > 0) {
           setProfessionals(res.data.data);
         } else {
-          // Filter fallback data client-side
+          // Filter fallback data client-side by city & criteria
           let list = [...FALLBACK_PROS];
+          if (city && city !== 'All Cities' && city !== 'all') {
+            list = list.filter((p) => p.location?.city?.toLowerCase() === city.toLowerCase());
+          }
           if (verifiedOnly) list = list.filter((p) => p.verificationStatus === 'VERIFIED');
           if (minRating > 0) list = list.filter((p) => p.rating >= minRating);
           if (selectedService !== 'all') {
@@ -96,7 +109,11 @@ export default function ExplorePage({ selectedCity = 'Kolkata', onSelectCity }) 
           setProfessionals(list);
         }
       } catch (err) {
-        setProfessionals(FALLBACK_PROS);
+        let list = [...FALLBACK_PROS];
+        if (city && city !== 'All Cities' && city !== 'all') {
+          list = list.filter((p) => p.location?.city?.toLowerCase() === city.toLowerCase());
+        }
+        setProfessionals(list);
       } finally {
         setLoading(false);
       }

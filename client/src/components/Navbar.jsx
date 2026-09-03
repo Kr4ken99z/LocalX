@@ -30,7 +30,7 @@ export default function Navbar({ selectedCity = 'Kolkata', onSelectCity, onUseMy
   const [searchQuery, setSearchQuery] = useState('');
   const [isLocating, setIsLocating] = useState(false);
 
-  const cities = ['Kolkata', 'Bengaluru', 'Mumbai', 'Delhi NCR', 'Hyderabad', 'Pune'];
+  const cities = ['Kolkata', 'Bengaluru', 'Delhi NCR', 'Mumbai', 'Hyderabad', 'Chennai', 'Pune'];
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
