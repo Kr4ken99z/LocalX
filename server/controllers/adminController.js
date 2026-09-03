@@ -100,6 +100,8 @@ exports.getUsers = async (req, res) => {
   }
 };
 
+const MASTER_OWNER_EMAIL = 'admin@localx.app';
+
 // @desc    Toggle user status (Active / Suspended)
 // @route   PATCH /api/admin/users/:id/status
 exports.updateUserStatus = async (req, res) => {
@@ -112,6 +114,14 @@ exports.updateUserStatus = async (req, res) => {
     const user = await User.findById(req.params.id);
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Master Owner account cannot be suspended
+    if (user.email === MASTER_OWNER_EMAIL) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden: The Master Owner account (admin@localx.app) is protected and cannot be suspended.',
+      });
     }
 
     user.status = status;
@@ -130,6 +140,189 @@ exports.updateUserStatus = async (req, res) => {
       success: true,
       message: `User status changed to ${status}`,
       data: user,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Update user role (Customer, Professional, Admin) with Master Owner hierarchy
+// @route   PATCH /api/admin/users/:id/role
+exports.updateUserRole = async (req, res) => {
+  try {
+    const { role } = req.body;
+    if (!['customer', 'professional', 'admin'].includes(role)) {
+      return res.status(400).json({ success: false, message: 'Invalid role. Must be customer, professional, or admin.' });
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Protection 1: Nobody can degrade or modify the Master Owner account
+    if (user.email === MASTER_OWNER_EMAIL) {
+      return res.status(403).json({
+        success: false,
+        message: 'Security Violation: The Master Owner role (admin@localx.app) is immutable and cannot be degraded or changed by anyone.',
+      });
+    }
+
+    // Protection 2: Only the Master Owner can promote or demote Admin accounts
+    const isCallerMasterOwner = req.user.email === MASTER_OWNER_EMAIL;
+    if ((user.role === 'admin' || role === 'admin') && !isCallerMasterOwner) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access Denied: Only the Master Owner (admin@localx.app) has authority to create, promote, or degrade Admin accounts.',
+      });
+    }
+
+    const previousRole = user.role;
+    user.role = role;
+    await user.save();
+
+    // If upgraded to professional, ensure a professional profile exists
+    if (role === 'professional') {
+      let pro = await Professional.findOne({ userId: user._id });
+      if (!pro) {
+        pro = await Professional.create({
+          userId: user._id,
+          businessName: `${user.name} Services`,
+          category: 'other',
+          tagline: 'Verified Independent Specialist',
+          description: 'Specialist service provider on LocalX.',
+          trustScore: 80,
+          trustTier: 'Verified Master',
+          verificationStatus: 'VERIFIED',
+          location: { city: 'Kolkata', address: 'Kolkata, WB' },
+        });
+      }
+    }
+
+    await logAdminAction(
+      req.user._id,
+      req.user.email,
+      'UPDATE_USER_ROLE',
+      'User',
+      user._id.toString(),
+      { previousRole, newRole: role, callerIsMasterOwner: isCallerMasterOwner }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: `User role successfully changed from ${previousRole} to ${role}`,
+      data: user,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Create a new user or admin
+// @route   POST /api/admin/users
+exports.createUser = async (req, res) => {
+  try {
+    const { name, email, password, role = 'customer', phone } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Name, email, and password are required.' });
+    }
+
+    // Protection: Only Master Owner can create Admin accounts
+    if (role === 'admin' && req.user.email !== MASTER_OWNER_EMAIL) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access Denied: Only the Master Owner can create new Admin accounts.',
+      });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const existing = await User.findOne({ email: cleanEmail });
+    if (existing) {
+      return res.status(400).json({ success: false, message: 'A user with this email already exists.' });
+    }
+
+    const newUser = await User.create({
+      name: name.trim(),
+      email: cleanEmail,
+      password,
+      role,
+      phone: phone || '',
+    });
+
+    if (role === 'professional') {
+      await Professional.create({
+        userId: newUser._id,
+        businessName: `${newUser.name} Services`,
+        category: 'other',
+        tagline: 'Verified Specialist',
+        description: 'New service professional registered via Admin Console.',
+        trustScore: 85,
+        trustTier: 'Verified Master',
+        verificationStatus: 'VERIFIED',
+        location: { city: 'Kolkata', address: 'Kolkata, WB' },
+      });
+    }
+
+    await logAdminAction(
+      req.user._id,
+      req.user.email,
+      'CREATE_USER_BY_ADMIN',
+      'User',
+      newUser._id.toString(),
+      { name: newUser.name, email: newUser.email, role: newUser.role }
+    );
+
+    res.status(201).json({
+      success: true,
+      message: `User ${newUser.name} successfully created with role ${newUser.role}`,
+      data: newUser,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Delete user or admin
+// @route   DELETE /api/admin/users/:id
+exports.deleteUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Protection 1: Master Owner cannot be deleted by anyone under any circumstances
+    if (user.email === MASTER_OWNER_EMAIL) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden: The Master Owner account (admin@localx.app) cannot be deleted.',
+      });
+    }
+
+    // Protection 2: Only Master Owner can delete an Admin account
+    if (user.role === 'admin' && req.user.email !== MASTER_OWNER_EMAIL) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access Denied: Only the Master Owner has permission to delete Admin accounts.',
+      });
+    }
+
+    // Cascade delete associated professional profile
+    await Professional.deleteOne({ userId: user._id });
+    await User.findByIdAndDelete(user._id);
+
+    await logAdminAction(
+      req.user._id,
+      req.user.email,
+      'DELETE_USER',
+      'User',
+      user._id.toString(),
+      { deletedUserEmail: user.email, deletedUserRole: user.role }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: `Account for ${user.name} (${user.email}) has been permanently deleted.`,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

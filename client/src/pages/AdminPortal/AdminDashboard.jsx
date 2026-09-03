@@ -18,6 +18,8 @@ import {
   Layers,
   Trash2,
   RefreshCw,
+  UserPlus,
+  Crown,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -42,6 +44,16 @@ export default function AdminDashboard() {
   const [selectedDispute, setSelectedDispute] = useState(null);
   const [disputeNotes, setDisputeNotes] = useState('');
   const [actionSuccess, setActionSuccess] = useState('');
+
+  // User Creation State
+  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const [newUserName, setNewUserName] = useState('');
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserPassword, setNewUserPassword] = useState('');
+  const [newUserRole, setNewUserRole] = useState('customer');
+  const [newUserPhone, setNewUserPhone] = useState('');
+  const [createUserError, setCreateUserError] = useState('');
+  const [createUserLoading, setCreateUserLoading] = useState(false);
 
   // New Category State
   const [newCatName, setNewCatName] = useState('');
@@ -115,6 +127,53 @@ export default function AdminDashboard() {
       fetchDashboardData();
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to update user status');
+    }
+  };
+
+  const handleUpdateUserRole = async (userId, newRole) => {
+    try {
+      const res = await axios.patch(`/api/admin/users/${userId}/role`, { role: newRole });
+      setActionSuccess(res.data.message || `User role updated to ${newRole}`);
+      fetchDashboardData();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update user role');
+    }
+  };
+
+  const handleDeleteUser = async (userId, userName, userEmail) => {
+    if (!window.confirm(`⚠️ PERMANENT ACTION: Are you sure you want to permanently delete user "${userName}" (${userEmail})?`)) return;
+    try {
+      const res = await axios.delete(`/api/admin/users/${userId}`);
+      setActionSuccess(res.data.message || 'User deleted successfully');
+      fetchDashboardData();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to delete user');
+    }
+  };
+
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    setCreateUserLoading(true);
+    setCreateUserError('');
+    try {
+      const res = await axios.post('/api/admin/users', {
+        name: newUserName,
+        email: newUserEmail,
+        password: newUserPassword,
+        role: newUserRole,
+        phone: newUserPhone,
+      });
+      setShowCreateUserModal(false);
+      setNewUserName('');
+      setNewUserEmail('');
+      setNewUserPassword('');
+      setNewUserPhone('');
+      setActionSuccess(res.data.message || 'User created successfully');
+      fetchDashboardData();
+    } catch (err) {
+      setCreateUserError(err.response?.data?.message || 'Failed to create user');
+    } finally {
+      setCreateUserLoading(false);
     }
   };
 
@@ -437,69 +496,224 @@ export default function AdminDashboard() {
       {/* TAB 4: USERS DIRECTORY */}
       {activeTab === 'users' && (
         <div className="glass-panel p-6 rounded-3xl space-y-4">
-          <h2 className="text-base font-extrabold text-white flex items-center gap-2">
-            <Users className="w-4 h-4 text-teal-400" />
-            <span>Platform User Directory ({usersList.length})</span>
-          </h2>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-base font-extrabold text-white flex items-center gap-2">
+                <Users className="w-4 h-4 text-teal-400" />
+                <span>Platform User Directory ({usersList.length})</span>
+              </h2>
+              <p className="text-slate-400 text-xs mt-0.5">
+                Manage accounts, assign roles, create admins, or revoke privileges.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowCreateUserModal(true)}
+              className="px-3.5 py-2 rounded-xl bg-teal-400 hover:bg-teal-300 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition shadow-lg shadow-teal-500/20"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Create User / Admin</span>
+            </button>
+          </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="text-slate-400 border-b border-slate-800">
                 <tr>
                   <th className="py-2.5">User</th>
-                  <th>Role</th>
-                  <th>Location</th>
+                  <th>Role & Assignment</th>
+                  <th>City</th>
                   <th>Status</th>
-                  <th className="text-right">Action</th>
+                  <th className="text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
-                {usersList.map((u) => (
-                  <tr key={u._id} className="hover:bg-slate-900/40">
-                    <td className="py-3 flex items-center gap-2">
-                      <img
-                        src={u.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80'}
-                        alt=""
-                        className="w-7 h-7 rounded-full object-cover"
-                      />
-                      <div>
-                        <p className="font-bold text-white">{u.name}</p>
-                        <p className="text-[10px] text-slate-500">{u.email}</p>
-                      </div>
-                    </td>
-                    <td>
-                      <span className="px-2 py-0.5 rounded uppercase font-bold text-[10px] bg-slate-800 text-slate-300">
-                        {u.role}
-                      </span>
-                    </td>
-                    <td className="text-slate-400">{u.location?.city || 'Bengaluru'}</td>
-                    <td>
-                      <span
-                        className={`px-2 py-0.5 rounded font-bold text-[10px] ${
-                          u.status === 'active' ? 'text-teal-400 bg-teal-500/10' : 'text-rose-400 bg-rose-500/10'
-                        }`}
-                      >
-                        {u.status || 'active'}
-                      </span>
-                    </td>
-                    <td className="text-right">
-                      {u.role !== 'admin' && (
-                        <button
-                          onClick={() => handleToggleUserStatus(u._id, u.status || 'active')}
-                          className={`px-2.5 py-1 rounded text-[11px] font-semibold border ${
-                            u.status === 'suspended'
-                              ? 'border-teal-500/40 text-teal-400 hover:bg-teal-500/10'
-                              : 'border-rose-500/40 text-rose-400 hover:bg-rose-500/10'
+                {usersList.map((u) => {
+                  const isMasterOwner = u.email === 'admin@localx.app';
+                  return (
+                    <tr key={u._id} className="hover:bg-slate-900/40">
+                      <td className="py-3 flex items-center gap-2.5">
+                        <img
+                          src={u.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80'}
+                          alt=""
+                          className="w-8 h-8 rounded-full object-cover border border-slate-700"
+                        />
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-bold text-white">{u.name}</p>
+                            {isMasterOwner && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/40 text-amber-300 font-extrabold text-[10px] uppercase">
+                                <Crown className="w-3 h-3 text-amber-400 fill-amber-400" />
+                                Master Owner
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-slate-400">{u.email}</p>
+                        </div>
+                      </td>
+                      <td>
+                        {isMasterOwner ? (
+                          <span className="px-2 py-1 rounded font-bold text-[10px] bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                            MASTER ADMIN (IMMUTABLE)
+                          </span>
+                        ) : (
+                          <select
+                            value={u.role}
+                            onChange={(e) => handleUpdateUserRole(u._id, e.target.value)}
+                            className="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-700 text-white font-semibold text-[11px] cursor-pointer focus:outline-none focus:border-teal-400"
+                          >
+                            <option value="customer" className="bg-slate-900 text-white">Customer</option>
+                            <option value="professional" className="bg-slate-900 text-white">Professional</option>
+                            <option value="admin" className="bg-slate-900 text-rose-400 font-bold">Admin</option>
+                          </select>
+                        )}
+                      </td>
+                      <td className="text-slate-400">{u.location?.city || u.city || 'Kolkata'}</td>
+                      <td>
+                        <span
+                          className={`px-2 py-0.5 rounded font-bold text-[10px] ${
+                            u.status === 'active' ? 'text-teal-400 bg-teal-500/10' : 'text-rose-400 bg-rose-500/10'
                           }`}
                         >
-                          {u.status === 'suspended' ? 'Reactivate' : 'Suspend'}
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                          {u.status || 'active'}
+                        </span>
+                      </td>
+                      <td className="text-right space-x-2">
+                        {!isMasterOwner && (
+                          <>
+                            <button
+                              onClick={() => handleToggleUserStatus(u._id, u.status || 'active')}
+                              className={`px-2.5 py-1 rounded text-[11px] font-semibold border transition ${
+                                u.status === 'suspended'
+                                  ? 'border-teal-500/40 text-teal-400 hover:bg-teal-500/10'
+                                  : 'border-amber-500/40 text-amber-400 hover:bg-amber-500/10'
+                              }`}
+                            >
+                              {u.status === 'suspended' ? 'Reactivate' : 'Suspend'}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteUser(u._id, u.name, u.email)}
+                              title="Delete User"
+                              className="p-1 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition inline-block align-middle"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* CREATE USER / ADMIN MODAL */}
+      {showCreateUserModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="w-full max-w-md p-6 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl relative text-xs">
+            <button
+              onClick={() => setShowCreateUserModal(false)}
+              className="absolute top-4 right-4 p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"
+            >
+              ✕
+            </button>
+
+            <div className="flex items-center gap-2 text-teal-400 mb-1">
+              <UserPlus className="w-5 h-5" />
+              <h3 className="text-base font-extrabold text-white">Create New Account</h3>
+            </div>
+            <p className="text-slate-400 mb-4">
+              Add a customer, professional specialist, or platform administrator.
+            </p>
+
+            {createUserError && (
+              <div className="p-3 mb-4 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>{createUserError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleCreateUser} className="space-y-3.5">
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Full Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Alex Henderson"
+                  value={newUserName}
+                  onChange={(e) => setNewUserName(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-teal-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Email Address</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="alex@example.com"
+                  value={newUserEmail}
+                  onChange={(e) => setNewUserEmail(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-teal-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Password</label>
+                <input
+                  type="password"
+                  required
+                  placeholder="••••••••"
+                  value={newUserPassword}
+                  onChange={(e) => setNewUserPassword(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-teal-400"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Role</label>
+                  <select
+                    value={newUserRole}
+                    onChange={(e) => setNewUserRole(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-teal-400"
+                  >
+                    <option value="customer">Customer</option>
+                    <option value="professional">Professional</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Phone (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="+91 98765 43210"
+                    value={newUserPhone}
+                    onChange={(e) => setNewUserPhone(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-teal-400"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateUserModal(false)}
+                  className="flex-1 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={createUserLoading}
+                  className="flex-1 py-2 rounded-xl bg-teal-400 hover:bg-teal-300 text-slate-950 font-bold transition shadow-lg shadow-teal-500/20 disabled:opacity-50"
+                >
+                  {createUserLoading ? 'Creating...' : 'Create Account'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

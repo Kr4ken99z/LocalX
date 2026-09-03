@@ -4,6 +4,9 @@ const {
   getDashboardMetrics,
   getUsers,
   updateUserStatus,
+  updateUserRole,
+  createUser,
+  deleteUser,
   getProfessionals,
   verifyProfessional,
   getBookings,
@@ -20,7 +23,10 @@ router.use(authorize('admin'));
 
 router.get('/dashboard', getDashboardMetrics);
 router.get('/users', getUsers);
+router.post('/users', createUser);
 router.patch('/users/:id/status', updateUserStatus);
+router.patch('/users/:id/role', updateUserRole);
+router.delete('/users/:id', deleteUser);
 router.get('/professionals', getProfessionals);
 router.patch('/professionals/:id/verify', verifyProfessional);
 router.get('/bookings', getBookings);

@@ -12,101 +12,115 @@ import {
   Sparkles,
   ArrowRight,
   Info,
+  RefreshCw,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { FALLBACK_PROS } from '../utils/mockData';
 
 export default function BookingModal({ professional, initialService = null, onClose, onSuccess }) {
   const navigate = useNavigate();
 
+  // Active Specialist (Supports 1-click switching to alternative specialist)
+  const [currentPro, setCurrentPro] = useState(professional);
+
+  // Find alternative specialist in the same category
+  const alternativePro = FALLBACK_PROS.find(
+    (p) =>
+      (p.category === currentPro.category || p.skills?.[0] === currentPro.skills?.[0]) &&
+      p._id !== currentPro._id
+  ) || FALLBACK_PROS.find((p) => p._id !== currentPro._id);
+
+  const isHighDemandBooked = currentPro.availabilityType === 'booked_until_nov';
+
   // Selected Service
   const [selectedService, setSelectedService] = useState(
-    initialService || professional?.services?.[0] || { name: 'Standard Service Consultation', price: 299 }
+    initialService || currentPro?.services?.[0] || { name: 'Standard Service Consultation', price: 299 }
   );
 
-  // Helper dates (Today, Tomorrow, Day +2, Day +3, Day +4)
+  // Month selection for high-demand pros: 'sep', 'oct', 'nov'
+  const [selectedMonth, setSelectedMonth] = useState(isHighDemandBooked ? 'sep' : 'sep');
+
+  // Dates
   const today = new Date();
   const tomorrow = new Date(Date.now() + 86400000);
   const dayAfter = new Date(Date.now() + 86400000 * 2);
-  const day3 = new Date(Date.now() + 86400000 * 3);
+  const novDate1 = '2026-11-02';
+  const novDate2 = '2026-11-03';
+  const novDate3 = '2026-11-04';
 
   const formatDateStr = (d) => d.toISOString().split('T')[0];
-  const formatDayName = (d) => d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
-  // Date selection (Defaults to Tomorrow since Today is booked up)
-  const [scheduledDate, setScheduledDate] = useState(formatDateStr(today)); // Initially today to demonstrate "Not available" behavior
-  const [scheduledTime, setScheduledTime] = useState('');
+  const [scheduledDate, setScheduledDate] = useState(
+    isHighDemandBooked ? formatDateStr(today) : formatDateStr(tomorrow)
+  );
+  const [scheduledTime, setScheduledTime] = useState(isHighDemandBooked ? '' : '01:00 PM - 03:00 PM');
 
   // Address & Notes
   const [addressLine, setAddressLine] = useState('#402, Sunshine Heights, 12th Main, Salt Lake');
-  const [city, setCity] = useState(professional?.location?.city || 'Kolkata');
+  const [city, setCity] = useState(currentPro?.location?.city || 'Kolkata');
   const [landmark, setLandmark] = useState('Near Metro Station');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Date availability configuration
-  const dateAvailability = {
-    [formatDateStr(today)]: {
-      label: 'Today',
-      status: 'booked',
-      badge: 'Fully Booked',
-      badgeColor: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
-      message: 'This specialist is fully booked for today. Please select tomorrow or a later date.',
-    },
-    [formatDateStr(tomorrow)]: {
-      label: 'Tomorrow',
-      status: 'limited',
-      badge: '2 Slots Left',
-      badgeColor: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-      message: 'Filling fast! Only afternoon slots remaining.',
-    },
-    [formatDateStr(dayAfter)]: {
-      label: formatDayName(dayAfter),
-      status: 'available',
-      badge: 'Available',
-      badgeColor: 'bg-teal-500/15 text-teal-300 border-teal-500/30',
-      message: 'Multiple slots available throughout the day.',
-    },
-    [formatDateStr(day3)]: {
-      label: formatDayName(day3),
-      status: 'available',
-      badge: 'Available',
-      badgeColor: 'bg-teal-500/15 text-teal-300 border-teal-500/30',
-      message: 'Full schedule open.',
-    },
-  };
-
-  // Time slot configurations per date
-  const getTimeSlotsForDate = (dateStr) => {
-    if (dateStr === formatDateStr(today)) {
-      return [
-        { slot: '08:00 AM - 10:00 AM', status: 'booked', reason: 'Booked by neighbor' },
-        { slot: '10:00 AM - 12:00 PM', status: 'booked', reason: 'On active job' },
-        { slot: '01:00 PM - 03:00 PM', status: 'booked', reason: 'Scheduled appointment' },
-        { slot: '03:00 PM - 05:00 PM', status: 'booked', reason: 'In transit' },
-        { slot: '05:00 PM - 07:00 PM', status: 'booked', reason: 'Evening emergency roster' },
-      ];
-    } else if (dateStr === formatDateStr(tomorrow)) {
-      return [
-        { slot: '08:00 AM - 10:00 AM', status: 'booked', reason: 'Booked' },
-        { slot: '10:00 AM - 12:00 PM', status: 'booked', reason: 'Booked' },
-        { slot: '01:00 PM - 03:00 PM', status: 'available', reason: 'Open' },
-        { slot: '03:00 PM - 05:00 PM', status: 'available', reason: 'Open' },
-        { slot: '05:00 PM - 07:00 PM', status: 'booked', reason: 'Booked' },
-      ];
+  // Date Availability Logic
+  const getAvailabilityStatus = (dateStr) => {
+    if (isHighDemandBooked) {
+      if (dateStr.startsWith('2026-09') || dateStr.startsWith('2026-10') || dateStr === formatDateStr(today) || dateStr === formatDateStr(tomorrow)) {
+        return {
+          status: 'booked',
+          badge: 'Fully Booked',
+          badgeColor: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
+          message: 'No open slots in September or October. Nearest open availability begins in November 2026.',
+        };
+      }
+      return {
+        status: 'available',
+        badge: 'Available',
+        badgeColor: 'bg-teal-500/15 text-teal-300 border-teal-500/30',
+        message: 'Multiple slots open for November 2026.',
+      };
     } else {
-      return [
-        { slot: '08:00 AM - 10:00 AM', status: 'available', reason: 'Open' },
-        { slot: '10:00 AM - 12:00 PM', status: 'available', reason: 'Open' },
-        { slot: '01:00 PM - 03:00 PM', status: 'available', reason: 'Open' },
-        { slot: '03:00 PM - 05:00 PM', status: 'available', reason: 'Open' },
-        { slot: '05:00 PM - 07:00 PM', status: 'available', reason: 'Open' },
-      ];
+      // Rapid response pro: available now
+      if (dateStr === formatDateStr(today)) {
+        return {
+          status: 'booked',
+          badge: 'Booked Today',
+          badgeColor: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+          message: 'Today’s schedule is full. Tomorrow is wide open!',
+        };
+      }
+      return {
+        status: 'available',
+        badge: 'Slots Open',
+        badgeColor: 'bg-teal-500/15 text-teal-300 border-teal-500/30',
+        message: 'Open slots available for fast dispatch!',
+      };
     }
   };
 
+  const getTimeSlotsForDate = (dateStr) => {
+    if (isHighDemandBooked && (dateStr.startsWith('2026-09') || dateStr.startsWith('2026-10') || dateStr === formatDateStr(today))) {
+      return [
+        { slot: '08:00 AM - 10:00 AM', status: 'booked', reason: 'Booked by neighbor' },
+        { slot: '10:00 AM - 12:00 PM', status: 'booked', reason: 'High demand job' },
+        { slot: '01:00 PM - 03:00 PM', status: 'booked', reason: 'Scheduled service' },
+        { slot: '03:00 PM - 05:00 PM', status: 'booked', reason: 'In transit' },
+      ];
+    }
+
+    return [
+      { slot: '08:00 AM - 10:00 AM', status: 'available', reason: 'Open' },
+      { slot: '10:00 AM - 12:00 PM', status: 'available', reason: 'Open' },
+      { slot: '01:00 PM - 03:00 PM', status: 'available', reason: 'Open' },
+      { slot: '03:00 PM - 05:00 PM', status: 'available', reason: 'Open' },
+      { slot: '05:00 PM - 07:00 PM', status: 'available', reason: 'Open' },
+    ];
+  };
+
+  const currentSlotInfo = getAvailabilityStatus(scheduledDate);
+  const isDateFullyBooked = currentSlotInfo.status === 'booked';
   const currentSlots = getTimeSlotsForDate(scheduledDate);
-  const isDateFullyBooked = dateAvailability[scheduledDate]?.status === 'booked';
 
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
@@ -125,8 +139,8 @@ export default function BookingModal({ professional, initialService = null, onCl
 
     try {
       const res = await axios.post('/api/bookings', {
-        professionalId: professional._id,
-        serviceId: selectedService.serviceId || professional._id,
+        professionalId: currentPro._id,
+        serviceId: selectedService.serviceId || currentPro._id,
         serviceName: selectedService.name,
         scheduledDate,
         scheduledTime,
@@ -163,20 +177,43 @@ export default function BookingModal({ professional, initialService = null, onCl
         </button>
 
         {/* Pro Header */}
-        <div className="flex items-center gap-3 mb-5 pb-4 border-b border-slate-800">
-          <img
-            src={professional.userId?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'}
-            alt={professional.businessName}
-            className="w-12 h-12 rounded-2xl object-cover border-2 border-teal-500/40 shrink-0"
-          />
-          <div>
-            <span className="text-[10px] font-extrabold text-teal-400 uppercase tracking-wider flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              Verified Local Specialist
-            </span>
-            <h3 className="text-base font-extrabold text-white">{professional.businessName}</h3>
-            <p className="text-[11px] text-slate-400">{professional.location?.address || professional.location?.city}</p>
+        <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-800">
+          <div className="flex items-center gap-3">
+            <img
+              src={currentPro.userId?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'}
+              alt={currentPro.businessName}
+              className="w-12 h-12 rounded-2xl object-cover border-2 border-teal-500/40 shrink-0"
+            />
+            <div>
+              <span className="text-[10px] font-extrabold text-teal-400 uppercase tracking-wider flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                {isHighDemandBooked ? 'High Demand Specialist (Peak Volume)' : 'Quick Response Specialist'}
+              </span>
+              <h3 className="text-base font-extrabold text-white">{currentPro.businessName}</h3>
+              <p className="text-[11px] text-slate-400">{currentPro.location?.address || currentPro.location?.city}</p>
+            </div>
           </div>
+          {alternativePro && (
+            <button
+              type="button"
+              onClick={() => {
+                const next = alternativePro;
+                setCurrentPro(next);
+                setSelectedService(next.services?.[0] || selectedService);
+                if (next.availabilityType === 'available_now') {
+                  setScheduledDate(formatDateStr(tomorrow));
+                  setScheduledTime('01:00 PM - 03:00 PM');
+                } else {
+                  setScheduledDate(formatDateStr(today));
+                  setScheduledTime('');
+                }
+              }}
+              className="text-[11px] font-bold text-teal-400 hover:text-teal-300 flex items-center gap-1 border border-teal-500/30 px-2.5 py-1.5 rounded-xl hover:bg-teal-500/10 transition shrink-0"
+            >
+              <RefreshCw className="w-3 h-3" />
+              <span>Change Specialist</span>
+            </button>
+          )}
         </div>
 
         {error && (
@@ -190,12 +227,12 @@ export default function BookingModal({ professional, initialService = null, onCl
           {/* 1. Service Selection */}
           <div>
             <label className="block text-slate-300 font-bold mb-1.5">1. Select Service</label>
-            <div className="grid grid-cols-1 gap-2 max-h-36 overflow-y-auto pr-1">
-              {professional.services?.map((s, idx) => (
+            <div className="grid grid-cols-1 gap-2 max-h-32 overflow-y-auto pr-1">
+              {currentPro.services?.map((s, idx) => (
                 <div
                   key={idx}
                   onClick={() => setSelectedService(s)}
-                  className={`p-3 rounded-2xl border cursor-pointer transition flex items-center justify-between ${
+                  className={`p-2.5 rounded-2xl border cursor-pointer transition flex items-center justify-between ${
                     selectedService.name === s.name
                       ? 'bg-teal-500/15 border-teal-500/60 text-white'
                       : 'bg-slate-900/80 border-slate-800 hover:border-slate-700 text-slate-300'
@@ -216,61 +253,194 @@ export default function BookingModal({ professional, initialService = null, onCl
             </div>
           </div>
 
-          {/* 2. Date Selection (With nearest date unavailable banner) */}
+          {/* 2. Month & Date Selection */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-slate-300 font-bold">2. Select Date</label>
-              {isDateFullyBooked && (
+              <label className="text-slate-300 font-bold">2. Select Schedule Date</label>
+              {isHighDemandBooked && isDateFullyBooked && (
                 <button
                   type="button"
                   onClick={() => {
-                    setScheduledDate(formatDateStr(tomorrow));
-                    setScheduledTime('01:00 PM - 03:00 PM');
+                    setSelectedMonth('nov');
+                    setScheduledDate(novDate1);
+                    setScheduledTime('10:00 AM - 12:00 PM');
                   }}
                   className="text-teal-400 hover:text-teal-300 text-[11px] font-bold flex items-center gap-1"
                 >
-                  <span>Jump to Tomorrow</span>
+                  <span>Jump to November Availability</span>
                   <ArrowRight className="w-3 h-3" />
                 </button>
               )}
             </div>
 
-            <div className="grid grid-cols-4 gap-2">
-              {Object.entries(dateAvailability).map(([dStr, info]) => (
-                <button
-                  key={dStr}
-                  type="button"
-                  onClick={() => {
-                    setScheduledDate(dStr);
-                    setScheduledTime('');
-                  }}
-                  className={`p-2 rounded-2xl border flex flex-col items-center text-center transition ${
-                    scheduledDate === dStr
-                      ? 'bg-teal-500/20 border-teal-400 text-white shadow-md'
-                      : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
-                  }`}
-                >
-                  <span className="font-bold text-[11px] text-white">{info.label}</span>
-                  <span className={`text-[9px] px-1.5 py-0.5 mt-1 rounded-md border font-bold ${info.badgeColor}`}>
-                    {info.badge}
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            {/* Nearest Date Unavailable Banner */}
-            {isDateFullyBooked ? (
-              <div className="mt-2.5 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
-                <div>
-                  <strong className="block font-bold text-amber-200">Nearest Date Fully Booked</strong>
-                  This specialist has no open slots remaining for today. Please click <strong>Tomorrow</strong> or a later date above to choose an open slot.
+            {/* Month Tabs for High-Demand Pro */}
+            {isHighDemandBooked ? (
+              <div className="space-y-2 mb-2">
+                <div className="grid grid-cols-3 gap-1.5 p-1 rounded-2xl bg-slate-950 border border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedMonth('sep');
+                      setScheduledDate(formatDateStr(today));
+                      setScheduledTime('');
+                    }}
+                    className={`py-1.5 rounded-xl text-center text-[11px] font-bold transition ${
+                      selectedMonth === 'sep'
+                        ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Sep 2026 <span className="text-[9px] block text-rose-400 font-semibold">(Booked)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedMonth('oct');
+                      setScheduledDate('2026-10-15');
+                      setScheduledTime('');
+                    }}
+                    className={`py-1.5 rounded-xl text-center text-[11px] font-bold transition ${
+                      selectedMonth === 'oct'
+                        ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Oct 2026 <span className="text-[9px] block text-rose-400 font-semibold">(Booked)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedMonth('nov');
+                      setScheduledDate(novDate1);
+                      setScheduledTime('10:00 AM - 12:00 PM');
+                    }}
+                    className={`py-1.5 rounded-xl text-center text-[11px] font-bold transition ${
+                      selectedMonth === 'nov'
+                        ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Nov 2026 <span className="text-[9px] block text-teal-400 font-semibold">(🟢 Available)</span>
+                  </button>
                 </div>
+
+                {/* Date slots for selected month */}
+                {selectedMonth === 'nov' ? (
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { date: novDate1, label: 'Mon, Nov 02' },
+                      { date: novDate2, label: 'Tue, Nov 03' },
+                      { date: novDate3, label: 'Wed, Nov 04' },
+                    ].map((d) => (
+                      <button
+                        key={d.date}
+                        type="button"
+                        onClick={() => {
+                          setScheduledDate(d.date);
+                          setScheduledTime('10:00 AM - 12:00 PM');
+                        }}
+                        className={`p-2 rounded-2xl border text-center transition ${
+                          scheduledDate === d.date
+                            ? 'bg-teal-500/20 border-teal-400 text-white'
+                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
+                        }`}
+                      >
+                        <span className="font-bold text-[11px] text-white block">{d.label}</span>
+                        <span className="text-[9px] text-teal-400 font-bold">🟢 Open Slots</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { date: formatDateStr(today), label: 'Today' },
+                      { date: formatDateStr(tomorrow), label: 'Tomorrow' },
+                      { date: formatDateStr(dayAfter), label: 'Upcoming' },
+                    ].map((d) => (
+                      <button
+                        key={d.date}
+                        type="button"
+                        disabled
+                        className="p-2 rounded-2xl border border-rose-900/40 bg-rose-950/20 text-center opacity-70 cursor-not-allowed"
+                      >
+                        <span className="font-bold text-[11px] text-rose-300 block">{d.label}</span>
+                        <span className="text-[9px] text-rose-400 font-bold">🔴 Fully Booked</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="mt-2 p-2.5 rounded-xl bg-teal-500/10 border border-teal-500/30 text-teal-300 text-[11px] flex items-center gap-1.5">
-                <Info className="w-3.5 h-3.5 shrink-0" />
-                <span>{dateAvailability[scheduledDate]?.message}</span>
+              /* Rapid Response Pro Date Grid */
+              <div className="grid grid-cols-3 gap-2 mb-2">
+                {[
+                  { date: formatDateStr(today), label: 'Today', badge: 'Full', booked: true },
+                  { date: formatDateStr(tomorrow), label: 'Tomorrow', badge: '🟢 Open Slots', booked: false },
+                  { date: formatDateStr(dayAfter), label: 'Day After', badge: '🟢 Open Slots', booked: false },
+                ].map((d) => (
+                  <button
+                    key={d.date}
+                    type="button"
+                    disabled={d.booked}
+                    onClick={() => {
+                      setScheduledDate(d.date);
+                      setScheduledTime('01:00 PM - 03:00 PM');
+                    }}
+                    className={`p-2.5 rounded-2xl border text-center transition ${
+                      scheduledDate === d.date
+                        ? 'bg-teal-500/20 border-teal-400 text-white'
+                        : d.booked
+                        ? 'bg-slate-950/60 border-slate-800 text-slate-500 cursor-not-allowed'
+                        : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
+                    }`}
+                  >
+                    <span className="font-bold text-[11px] text-white block">{d.label}</span>
+                    <span className="text-[9px] font-bold mt-0.5 block text-teal-400">{d.badge}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* High Demand Warning & Alternative Specialist Switcher */}
+            {isHighDemandBooked && isDateFullyBooked && (
+              <div className="space-y-2 mt-2">
+                <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
+                  <div>
+                    <strong className="block font-bold text-amber-200">September & October Fully Booked</strong>
+                    This specialist is booked due to high seasonal volume. Earliest open slots begin in <strong>November 2026</strong>.
+                  </div>
+                </div>
+
+                {alternativePro && (
+                  <div className="p-3.5 rounded-2xl bg-teal-500/10 border border-teal-500/30 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-teal-300 text-xs flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-teal-400" />
+                        Need faster service?
+                      </span>
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-teal-500/20 text-teal-300 font-bold border border-teal-500/40">
+                        Available Tomorrow
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-300">
+                      Verified partner specialist <strong>{alternativePro.businessName}</strong> ({alternativePro.rating} ★) in this category has open slots available tomorrow.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCurrentPro(alternativePro);
+                        setSelectedService(alternativePro.services?.[0] || selectedService);
+                        setScheduledDate(formatDateStr(tomorrow));
+                        setScheduledTime('01:00 PM - 03:00 PM');
+                      }}
+                      className="w-full py-2 rounded-xl bg-teal-400 hover:bg-teal-300 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-md shadow-teal-500/20"
+                    >
+                      <span>Switch to {alternativePro.businessName} (Available Tomorrow)</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
