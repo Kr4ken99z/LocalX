@@ -7,6 +7,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 // Components
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import ContactSupportWidget from './components/ContactSupportWidget';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -151,6 +152,9 @@ function MainLayout() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
+
+        {/* Floating Contact Us & AI Support Widget (Hovering on left bottom slightly upper) */}
+        <ContactSupportWidget />
 
         {/* Global Footer */}
         <Footer />

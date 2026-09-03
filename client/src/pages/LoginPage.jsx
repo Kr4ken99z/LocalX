@@ -166,38 +166,6 @@ export default function LoginPage() {
               </button>
             </form>
 
-            {/* Instant Demo Logins Bar */}
-            <div className="pt-2">
-              <div className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block text-center">
-                  ⚡ Quick Demo Login (Instant Access)
-                </span>
-                <div className="grid grid-cols-3 gap-2 text-xs">
-                  <button
-                    type="button"
-                    onClick={() => handleDemoClick('customer')}
-                    className="py-1.5 px-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-teal-500/30 text-teal-300 font-semibold transition text-center"
-                  >
-                    Customer
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDemoClick('professional')}
-                    className="py-1.5 px-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-violet-500/30 text-violet-300 font-semibold transition text-center"
-                  >
-                    Pro
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDemoClick('admin')}
-                    className="py-1.5 px-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-rose-500/30 text-rose-300 font-semibold transition text-center"
-                  >
-                    Admin
-                  </button>
-                </div>
-              </div>
-            </div>
-
             <p className="text-center text-xs text-slate-400 pt-1">
               New to LocalX?{' '}
               <Link to="/register" className="text-teal-400 font-bold hover:underline">

@@ -381,6 +381,42 @@ export default function HomePage({ selectedCity = 'Kolkata', onSelectCity }) {
           </Link>
         </div>
       </section>
+
+      {/* About LocalX / Bottom Description Section (Target of About Menu Link) */}
+      <section id="about" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="glass-panel p-8 sm:p-12 rounded-3xl border border-slate-800 space-y-6">
+          <div className="max-w-3xl space-y-3">
+            <span className="text-xs font-extrabold uppercase tracking-widest text-teal-400">About LocalX</span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
+              Hyperlocal Trust, Built From The Ground Up.
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              LocalX was born out of a simple observation: finding a dependable electrician, technician, or cleaner in an unfamiliar neighborhood shouldn’t feel like a leap of faith. Like a solitary boat navigating unknown waters guided by a beacon of light, LocalX anchors you to vetted, high-performing independent specialists nearby.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-slate-800/80 text-xs">
+            <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-1.5">
+              <h3 className="font-bold text-white text-sm">Strict ID Verification</h3>
+              <p className="text-slate-400 text-xs leading-relaxed">
+                Every specialist undergoes rigorous background checks and Aadhaar/Govt ID verification before taking bookings on the network.
+              </p>
+            </div>
+            <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-1.5">
+              <h3 className="font-bold text-white text-sm">Escrow Protection</h3>
+              <p className="text-slate-400 text-xs leading-relaxed">
+                Payments are held safely in escrow and only disbursed once you confirm job satisfaction with OTP completion codes.
+              </p>
+            </div>
+            <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-1.5">
+              <h3 className="font-bold text-white text-sm">Real-Time Dispatch</h3>
+              <p className="text-slate-400 text-xs leading-relaxed">
+                Hyperlocal radius tracking connects you to professionals within your immediate postal zone for fast, same-day arrival.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

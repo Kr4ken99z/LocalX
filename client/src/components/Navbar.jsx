@@ -52,6 +52,20 @@ export default function Navbar({ selectedCity = 'Kolkata', onSelectCity, onUseMy
     }
   };
 
+  const navigateAndScroll = (hashId) => {
+    setMenuOpen(false);
+    if (location.pathname === '/') {
+      const el = document.getElementById(hashId);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      navigate('/#' + hashId);
+      setTimeout(() => {
+        const el = document.getElementById(hashId);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }, 250);
+    }
+  };
+
   return (
     <>
       <header className="sticky top-0 z-40 bg-[#080f1c]/90 border-b border-slate-800/80 backdrop-blur-xl">
@@ -123,14 +137,16 @@ export default function Navbar({ selectedCity = 'Kolkata', onSelectCity, onUseMy
 
             {/* Navigation & Actions */}
             <div className="flex items-center gap-3">
-              {/* Menu Drawer Toggle Button */}
-              <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900/90 border border-slate-700/80 hover:border-slate-600 text-slate-200 text-xs font-semibold transition"
-              >
-                {menuOpen ? <X className="w-4 h-4 text-teal-400" /> : <Menu className="w-4 h-4 text-teal-400" />}
-                <span>Menu</span>
-              </button>
+              {/* Menu Drawer Toggle Button - Hidden on explore professional page per request */}
+              {!location.pathname.startsWith('/explore') && (
+                <button
+                  onClick={() => setMenuOpen(!menuOpen)}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900/90 border border-slate-700/80 hover:border-slate-600 text-slate-200 text-xs font-semibold transition"
+                >
+                  {menuOpen ? <X className="w-4 h-4 text-teal-400" /> : <Menu className="w-4 h-4 text-teal-400" />}
+                  <span>Menu</span>
+                </button>
+              )}
 
               {user ? (
                 <div className="relative">
@@ -315,22 +331,30 @@ export default function Navbar({ selectedCity = 'Kolkata', onSelectCity, onUseMy
                   <span>Explore Professionals</span>
                   <ArrowRight className="w-4 h-4 text-teal-400" />
                 </Link>
-                <Link
-                  to="/explore"
-                  onClick={() => setMenuOpen(false)}
-                  className="w-full p-3 rounded-2xl bg-slate-900 hover:bg-slate-850 text-white font-semibold flex items-center justify-between border border-slate-800 transition"
+                <button
+                  type="button"
+                  onClick={() => navigateAndScroll('services')}
+                  className="w-full p-3 rounded-2xl bg-slate-900 hover:bg-slate-850 text-white font-semibold flex items-center justify-between border border-slate-800 transition text-left"
                 >
-                  <span>Services</span>
+                  <span>Services Directory</span>
                   <ArrowDown className="w-4 h-4 text-teal-400" />
-                </Link>
-                <a
-                  href="#how-it-works"
-                  onClick={() => setMenuOpen(false)}
-                  className="w-full p-3 rounded-2xl bg-slate-900 hover:bg-slate-850 text-white font-semibold flex items-center justify-between border border-slate-800 transition"
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigateAndScroll('about')}
+                  className="w-full p-3 rounded-2xl bg-slate-900 hover:bg-slate-850 text-white font-semibold flex items-center justify-between border border-slate-800 transition text-left"
+                >
+                  <span>About LocalX</span>
+                  <ArrowDown className="w-4 h-4 text-teal-400" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigateAndScroll('how-it-works')}
+                  className="w-full p-3 rounded-2xl bg-slate-900 hover:bg-slate-850 text-white font-semibold flex items-center justify-between border border-slate-800 transition text-left"
                 >
                   <span>How it Works</span>
                   <ArrowDown className="w-4 h-4 text-teal-400" />
-                </a>
+                </button>
               </div>
 
               {/* CONNECT */}
