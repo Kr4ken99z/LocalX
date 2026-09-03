@@ -1,7 +1,21 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Zap, User, Wrench, AlertCircle, Mail, Lock, Phone, MapPin } from 'lucide-react';
+import {
+  Zap,
+  User,
+  Wrench,
+  AlertCircle,
+  Mail,
+  Lock,
+  Phone,
+  MapPin,
+  Crosshair,
+  CheckCircle2,
+  Sparkles,
+} from 'lucide-react';
+import { detectSmartLocation } from '../utils/locationHelper';
+import { METROPOLITAN_CITIES } from '../utils/mockData';
 
 export default function RegisterPage() {
   const [searchParams] = useSearchParams();
@@ -14,18 +28,57 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [serviceCategory, setServiceCategory] = useState('Electrician');
-  const [city, setCity] = useState('Bengaluru');
-  const [address, setAddress] = useState('Indiranagar');
+  
+  // Location States for Professional Registration
+  const [city, setCity] = useState('Kolkata');
+  const [isCustomCity, setIsCustomCity] = useState(false);
+  const [customCity, setCustomCity] = useState('');
+  const [address, setAddress] = useState('');
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationSuccess, setLocationSuccess] = useState('');
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const { register } = useAuth();
   const navigate = useNavigate();
 
+  const handleUseGpsLocation = async () => {
+    setIsLocating(true);
+    setLocationSuccess('');
+    setError('');
+    try {
+      const loc = await detectSmartLocation();
+      if (loc && loc.city) {
+        if (METROPOLITAN_CITIES.includes(loc.city)) {
+          setCity(loc.city);
+          setIsCustomCity(false);
+        } else {
+          setIsCustomCity(true);
+          setCustomCity(loc.city);
+        }
+        if (loc.address) {
+          setAddress(loc.address);
+        }
+        setLocationSuccess(`GPS Location Detected: ${loc.city}${loc.address ? ` (${loc.address})` : ''}`);
+      } else {
+        setLocationSuccess('GPS Location Captured Successfully!');
+      }
+    } catch (err) {
+      setError('Could not detect GPS location automatically. Please choose your city from the list.');
+    } finally {
+      setIsLocating(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    const effectiveCity = role === 'professional' 
+      ? (isCustomCity ? (customCity.trim() || 'Kolkata') : city) 
+      : undefined;
 
     const res = await register({
       name,
@@ -35,8 +88,8 @@ export default function RegisterPage() {
       role,
       businessName: role === 'professional' ? businessName : undefined,
       serviceCategory: role === 'professional' ? serviceCategory : undefined,
-      city,
-      address,
+      city: effectiveCity,
+      address: role === 'professional' ? (address.trim() || undefined) : undefined,
     });
 
     if (res.success) {
@@ -97,6 +150,7 @@ export default function RegisterPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+            {/* Common Inputs: Name & Phone */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-slate-300 font-semibold mb-1">Full Name</label>
@@ -122,6 +176,7 @@ export default function RegisterPage() {
               </div>
             </div>
 
+            {/* Email Address */}
             <div>
               <label className="block text-slate-300 font-semibold mb-1">Email Address</label>
               <input
@@ -134,6 +189,7 @@ export default function RegisterPage() {
               />
             </div>
 
+            {/* Password */}
             <div>
               <label className="block text-slate-300 font-semibold mb-1">Password (min 6 characters)</label>
               <input
@@ -147,6 +203,20 @@ export default function RegisterPage() {
               />
             </div>
 
+            {/* CUSTOMER ONLY: Informational note that location is NOT needed to register */}
+            {role === 'customer' && (
+              <div className="p-3.5 rounded-2xl bg-teal-500/10 border border-teal-500/30 text-[11px] text-teal-200 leading-relaxed flex items-start gap-2.5">
+                <MapPin className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold text-teal-300">Instant Access Without Location Setup</p>
+                  <p className="text-slate-300 mt-0.5">
+                    As a customer, you do not need to provide your location during sign up. You can detect your GPS or select any area anytime while exploring services!
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* PROFESSIONAL ONLY: Business Name, Trade Category, & Location Setup */}
             {role === 'professional' && (
               <div className="space-y-4 pt-2 border-t border-slate-800">
                 <div>
@@ -175,37 +245,99 @@ export default function RegisterPage() {
                     <option value="Carpenter">Carpentry & Assembly</option>
                     <option value="Painter">Painting & Waterproofing</option>
                     <option value="Pest Control">Pest Control</option>
+                    <option value="Smart Home">Smart Home & CCTV</option>
                   </select>
+                </div>
+
+                {/* Location Section with GPS Button & All Metropolitan Cities */}
+                <div className="space-y-2 pt-2 border-t border-slate-800/80">
+                  <div className="flex items-center justify-between">
+                    <label className="text-violet-300 font-semibold flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-teal-400" />
+                      <span>Operational Base & Service Location</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleUseGpsLocation}
+                      disabled={isLocating}
+                      title="Auto-detect coordinates and city via GPS"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/40 text-teal-300 text-[11px] font-bold transition shrink-0"
+                    >
+                      <Crosshair className={`w-3.5 h-3.5 text-teal-400 ${isLocating ? 'animate-spin' : ''}`} />
+                      <span>{isLocating ? 'Detecting GPS...' : 'Use My GPS Location'}</span>
+                    </button>
+                  </div>
+
+                  {locationSuccess && (
+                    <div className="p-2.5 rounded-xl bg-teal-500/15 border border-teal-500/40 text-teal-300 text-[11px] flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 shrink-0 text-teal-400" />
+                      <span>{locationSuccess}</span>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Metropolitan City Select */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-slate-300 font-semibold">City</label>
+                        <button
+                          type="button"
+                          onClick={() => setIsCustomCity(!isCustomCity)}
+                          className="text-[10px] text-teal-400 hover:underline font-bold"
+                        >
+                          {isCustomCity ? 'Pick Metro City' : 'Type Custom City'}
+                        </button>
+                      </div>
+
+                      {isCustomCity ? (
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Surat, Indore, Patna"
+                          value={customCity}
+                          onChange={(e) => setCustomCity(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-violet-400"
+                        />
+                      ) : (
+                        <select
+                          value={city}
+                          onChange={(e) => {
+                            if (e.target.value === 'custom') {
+                              setIsCustomCity(true);
+                            } else {
+                              setCity(e.target.value);
+                            }
+                          }}
+                          className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-violet-400"
+                        >
+                          {METROPOLITAN_CITIES.map((c) => (
+                            <option key={c} value={c} className="bg-slate-900 text-white">
+                              {c}
+                            </option>
+                          ))}
+                          <option value="custom" className="bg-slate-900 text-teal-300 font-bold">
+                            + Other City (Type Manually)
+                          </option>
+                        </select>
+                      )}
+                    </div>
+
+                    {/* Area / Locality */}
+                    <div>
+                      <label className="block text-slate-300 font-semibold mb-1">Area / Locality</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Salt Lake, Indiranagar, Bandra"
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-violet-400"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-slate-300 font-semibold mb-1">City</label>
-                <select
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-teal-400"
-                >
-                  <option value="Bengaluru">Bengaluru</option>
-                  <option value="Mumbai">Mumbai</option>
-                  <option value="Delhi NCR">Delhi NCR</option>
-                  <option value="Hyderabad">Hyderabad</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-slate-300 font-semibold mb-1">Area / Locality</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Indiranagar"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-teal-400"
-                />
-              </div>
-            </div>
 
             <button
               type="submit"

@@ -14,13 +14,15 @@ import {
   SlidersHorizontal,
   X,
   Crosshair,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { detectSmartLocation } from '../utils/locationHelper';
 import TrustScoreBadge from '../components/TrustScoreBadge';
 import LeafletMap from '../components/LeafletMap';
 import GoogleMapView from '../components/GoogleMapView';
 import BookingModal from '../components/BookingModal';
-import { FALLBACK_CATEGORIES, FALLBACK_PROS } from '../utils/mockData';
+import { FALLBACK_CATEGORIES, FALLBACK_PROS, METROPOLITAN_CITIES } from '../utils/mockData';
 
 const cityCoordinatesMap = {
   Kolkata: [22.5726, 88.3639],
@@ -30,6 +32,11 @@ const cityCoordinatesMap = {
   Hyderabad: [17.3850, 78.4867],
   Chennai: [13.0827, 80.2707],
   Pune: [18.5204, 73.8567],
+  Ahmedabad: [23.0225, 72.5714],
+  Jaipur: [26.9124, 75.7873],
+  Chandigarh: [30.7333, 76.7794],
+  Lucknow: [26.8467, 80.9462],
+  Kochi: [9.9312, 76.2673],
 };
 
 export default function ExplorePage({ selectedCity = 'Kolkata', onSelectCity }) {
@@ -52,10 +59,33 @@ export default function ExplorePage({ selectedCity = 'Kolkata', onSelectCity }) 
   const [isLocating, setIsLocating] = useState(false);
   const [mapEngine, setMapEngine] = useState('google'); // 'google' | 'osm'
 
+  // Pagination State (Requested by user: pages 1 to 5 with rich demos)
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 4;
+
   // Booking Modal
   const [activeBookingPro, setActiveBookingPro] = useState(null);
 
-  const demoCities = ['All Cities', 'Kolkata', 'Bengaluru', 'Delhi NCR', 'Mumbai', 'Hyderabad', 'Chennai', 'Pune'];
+  const demoCities = [
+    'All Cities',
+    'Kolkata',
+    'Bengaluru',
+    'Delhi NCR',
+    'Mumbai',
+    'Hyderabad',
+    'Chennai',
+    'Pune',
+    'Ahmedabad',
+    'Jaipur',
+    'Chandigarh',
+    'Lucknow',
+    'Kochi',
+  ];
+
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [city, search, selectedService, minRating, verifiedOnly, sortBy]);
 
   useEffect(() => {
     if (selectedCity && selectedCity !== city) {
@@ -450,6 +480,11 @@ export default function ExplorePage({ selectedCity = 'Kolkata', onSelectCity }) 
                 Showing <strong className="text-white">{professionals.length}</strong> verified specialists in{' '}
                 <span className="text-teal-400 font-semibold">{city === 'all' ? 'All Locations' : city}</span>
               </p>
+              {totalPages > 1 && (
+                <span className="text-[11px] text-slate-400 font-semibold bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800">
+                  Page {currentPage} of {totalPages}
+                </span>
+              )}
             </div>
 
             {loading ? (
@@ -493,80 +528,142 @@ export default function ExplorePage({ selectedCity = 'Kolkata', onSelectCity }) 
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-4">
-                {professionals.map((pro) => (
-                  <div
-                    key={pro._id}
-                    className="glass-panel glass-panel-hover p-5 rounded-2xl flex flex-col sm:flex-row justify-between gap-4"
-                  >
-                    <div className="flex items-start gap-4">
-                      <img
-                        src={pro.userId?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'}
-                        alt={pro.businessName}
-                        className="w-16 h-16 rounded-2xl object-cover border-2 border-teal-500/30 shrink-0"
-                      />
-                      <div className="space-y-1.5">
-                        <div className="flex flex-wrap items-center gap-2">
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-4">
+                  {paginatedPros.map((pro) => (
+                    <div
+                      key={pro._id}
+                      className="glass-panel glass-panel-hover p-5 rounded-2xl flex flex-col sm:flex-row justify-between gap-4"
+                    >
+                      <div className="flex items-start gap-4">
+                        <img
+                          src={pro.userId?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'}
+                          alt={pro.businessName}
+                          className="w-16 h-16 rounded-2xl object-cover border-2 border-teal-500/30 shrink-0"
+                        />
+                        <div className="space-y-1.5">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Link
+                              to={`/professionals/${pro._id}`}
+                              className="font-extrabold text-white text-sm hover:text-teal-300 transition"
+                            >
+                              {pro.businessName}
+                            </Link>
+                            {pro.verificationStatus === 'VERIFIED' && (
+                              <span className="flex items-center gap-1 text-[10px] font-bold text-teal-400 bg-teal-500/10 px-2 py-0.5 rounded-full border border-teal-500/30">
+                                <CheckCircle2 className="w-3 h-3" />
+                                VERIFIED PRO
+                              </span>
+                            )}
+                          </div>
+
+                          <p className="text-xs text-slate-300 line-clamp-1">{pro.tagline || pro.description}</p>
+
+                          <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-400">
+                            <span className="flex items-center gap-1 font-semibold text-amber-400">
+                              <Star className="w-3 h-3 fill-amber-400" />
+                              {pro.rating || 4.8} ({pro.totalReviews || 12} reviews)
+                            </span>
+                            <span>•</span>
+                            <span className="flex items-center gap-1">
+                              <MapPin className="w-3 h-3 text-teal-400" />
+                              {pro.location?.address || pro.location?.city || 'Kolkata'}
+                            </span>
+                            <span>•</span>
+                            <span>{pro.experienceYears || 5} yrs exp</span>
+                          </div>
+
+                          <div className="pt-1">
+                            <TrustScoreBadge score={pro.trustScore || 85} tier={pro.trustTier || 'Rising Pro'} />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-800 gap-2 shrink-0">
+                        <div className="text-left sm:text-right">
+                          <span className="text-[10px] text-slate-400 block">Starting at</span>
+                          <span className="text-lg font-extrabold text-teal-400">
+                            ₹{pro.services?.[0]?.price || 299}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
                           <Link
                             to={`/professionals/${pro._id}`}
-                            className="font-extrabold text-white text-sm hover:text-teal-300 transition"
+                            className="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-700 hover:border-slate-600 text-slate-200 text-xs font-semibold transition"
                           >
-                            {pro.businessName}
+                            Profile
                           </Link>
-                          {pro.verificationStatus === 'VERIFIED' && (
-                            <span className="flex items-center gap-1 text-[10px] font-bold text-teal-400 bg-teal-500/10 px-2 py-0.5 rounded-full border border-teal-500/30">
-                              <CheckCircle2 className="w-3 h-3" />
-                              VERIFIED PRO
-                            </span>
-                          )}
-                        </div>
-
-                        <p className="text-xs text-slate-300 line-clamp-1">{pro.tagline || pro.description}</p>
-
-                        <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-400">
-                          <span className="flex items-center gap-1 font-semibold text-amber-400">
-                            <Star className="w-3 h-3 fill-amber-400" />
-                            {pro.rating || 4.8} ({pro.totalReviews || 12} reviews)
-                          </span>
-                          <span>•</span>
-                          <span className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3 text-teal-400" />
-                            {pro.location?.address || pro.location?.city || 'Kolkata'}
-                          </span>
-                          <span>•</span>
-                          <span>{pro.experienceYears || 5} yrs exp</span>
-                        </div>
-
-                        <div className="pt-1">
-                          <TrustScoreBadge score={pro.trustScore || 85} tier={pro.trustTier || 'Rising Pro'} />
+                          <button
+                            onClick={() => setActiveBookingPro(pro)}
+                            className="px-3.5 py-1.5 rounded-xl bg-teal-400 hover:bg-teal-300 text-slate-950 text-xs font-bold transition shadow-md shadow-teal-500/20"
+                          >
+                            Book Now
+                          </button>
                         </div>
                       </div>
                     </div>
+                  ))}
+                </div>
 
-                    <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-800 gap-2 shrink-0">
-                      <div className="text-left sm:text-right">
-                        <span className="text-[10px] text-slate-400 block">Starting at</span>
-                        <span className="text-lg font-extrabold text-teal-400">
-                          ₹{pro.services?.[0]?.price || 299}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Link
-                          to={`/professionals/${pro._id}`}
-                          className="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-700 hover:border-slate-600 text-slate-200 text-xs font-semibold transition"
-                        >
-                          Profile
-                        </Link>
+                {/* Pagination Controls (Pages 1 to 5+) */}
+                {totalPages > 1 && (
+                  <div className="pt-4 pb-2 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <p className="text-xs text-slate-400">
+                      Showing <strong className="text-white">{(currentPage - 1) * itemsPerPage + 1}</strong> to{' '}
+                      <strong className="text-white">{Math.min(currentPage * itemsPerPage, professionals.length)}</strong> of{' '}
+                      <strong className="text-teal-400">{professionals.length}</strong> specialists
+                    </p>
+
+                    <div className="flex items-center gap-1.5 text-xs font-bold">
+                      {/* Previous Page */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCurrentPage((p) => Math.max(1, p - 1));
+                          window.scrollTo({ top: 350, behavior: 'smooth' });
+                        }}
+                        disabled={currentPage === 1}
+                        className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-40 disabled:pointer-events-none transition flex items-center gap-1"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                        <span>Prev</span>
+                      </button>
+
+                      {/* Numbered Page Buttons */}
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
                         <button
-                          onClick={() => setActiveBookingPro(pro)}
-                          className="px-3.5 py-1.5 rounded-xl bg-teal-400 hover:bg-teal-300 text-slate-950 text-xs font-bold transition shadow-md shadow-teal-500/20"
+                          key={pageNum}
+                          type="button"
+                          onClick={() => {
+                            setCurrentPage(pageNum);
+                            window.scrollTo({ top: 350, behavior: 'smooth' });
+                          }}
+                          className={`w-8 h-8 rounded-xl flex items-center justify-center transition font-bold ${
+                            currentPage === pageNum
+                              ? 'bg-teal-400 text-slate-950 font-black shadow-lg shadow-teal-500/25 scale-105'
+                              : 'bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800'
+                          }`}
                         >
-                          Book Now
+                          {pageNum}
                         </button>
-                      </div>
+                      ))}
+
+                      {/* Next Page */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCurrentPage((p) => Math.min(totalPages, p + 1));
+                          window.scrollTo({ top: 350, behavior: 'smooth' });
+                        }}
+                        disabled={currentPage === totalPages}
+                        className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-40 disabled:pointer-events-none transition flex items-center gap-1"
+                      >
+                        <span>Next</span>
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
-                ))}
+                )}
               </div>
             )}
           </div>

@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { detectSmartLocation } from '../utils/locationHelper';
 import TrustScoreBadge from '../components/TrustScoreBadge';
-import { FALLBACK_CATEGORIES, FALLBACK_PROS } from '../utils/mockData';
+import { FALLBACK_CATEGORIES, FALLBACK_PROS, METROPOLITAN_CITIES } from '../utils/mockData';
 
 export default function HomePage({ selectedCity = 'Kolkata', onSelectCity }) {
   const navigate = useNavigate();
@@ -29,7 +29,7 @@ export default function HomePage({ selectedCity = 'Kolkata', onSelectCity }) {
   const [loading, setLoading] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
 
-  const demoCities = ['Kolkata', 'Bengaluru', 'Delhi NCR', 'Mumbai', 'Hyderabad', 'Chennai', 'Pune'];
+  const demoCities = METROPOLITAN_CITIES;
 
   useEffect(() => {
     const fetchData = async () => {

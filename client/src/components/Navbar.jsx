@@ -20,6 +20,7 @@ import {
   ArrowDown,
 } from 'lucide-react';
 import { detectSmartLocation } from '../utils/locationHelper';
+import { METROPOLITAN_CITIES } from '../utils/mockData';
 
 export default function Navbar({ selectedCity = 'Kolkata', onSelectCity, onUseMyLocation }) {
   const { user, logout } = useAuth();
@@ -30,7 +31,7 @@ export default function Navbar({ selectedCity = 'Kolkata', onSelectCity, onUseMy
   const [searchQuery, setSearchQuery] = useState('');
   const [isLocating, setIsLocating] = useState(false);
 
-  const cities = ['Kolkata', 'Bengaluru', 'Delhi NCR', 'Mumbai', 'Hyderabad', 'Chennai', 'Pune'];
+  const cities = METROPOLITAN_CITIES;
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();

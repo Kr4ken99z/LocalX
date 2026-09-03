@@ -9,10 +9,25 @@ export const FALLBACK_CATEGORIES = [
   { _id: 'cat_8', name: 'Smart Home & CCTV Setup', slug: 'smart-home', icon: '📡', basePrice: 899, description: 'Smart switch configuration, IP camera and video doorbell installations, WiFi mesh, and more.' },
 ];
 
+export const METROPOLITAN_CITIES = [
+  'Kolkata',
+  'Bengaluru',
+  'Delhi NCR',
+  'Mumbai',
+  'Hyderabad',
+  'Chennai',
+  'Pune',
+  'Ahmedabad',
+  'Jaipur',
+  'Chandigarh',
+  'Lucknow',
+  'Kochi',
+];
+
 export const FALLBACK_PROS = [
-  // ==========================================
+  // =========================================================================
   // 1. KOLKATA PROFESSIONALS
-  // ==========================================
+  // =========================================================================
   {
     _id: 'pro_kol_1',
     businessName: 'Apex Electricals & Power Systems',
@@ -28,9 +43,7 @@ export const FALLBACK_PROS = [
     trustScore: 95,
     trustTier: 'Elite Pro',
     verificationStatus: 'VERIFIED',
-    availabilityType: 'booked_until_nov',
-    leadTimeNotice: 'Booked through September & October. Earliest open booking starts November 2026.',
-    alternativeProId: 'pro_kol_2',
+    availabilityType: 'available_now',
     skills: ['Electrician', 'Inverter Setup', 'Short Circuit', 'Earthing', 'Home Automation'],
     location: { city: 'Kolkata', address: 'Salt Lake Sector V, Kolkata', coordinates: [88.4312, 22.5769] },
     services: [
@@ -58,8 +71,6 @@ export const FALLBACK_PROS = [
     trustTier: 'Verified Master',
     verificationStatus: 'VERIFIED',
     availabilityType: 'available_now',
-    leadTimeNotice: 'Available Tomorrow with open morning and afternoon slots!',
-    alternativeProId: 'pro_kol_1',
     skills: ['Electrician', 'Emergency Repairs', 'Switchboard Setup', 'Light Fitting'],
     location: { city: 'Kolkata', address: 'Park Circus, Kolkata', coordinates: [88.3698, 22.5448] },
     services: [
@@ -86,9 +97,7 @@ export const FALLBACK_PROS = [
     trustScore: 92,
     trustTier: 'Elite Pro',
     verificationStatus: 'VERIFIED',
-    availabilityType: 'booked_until_nov',
-    leadTimeNotice: 'Booked through September & October. Earliest open booking starts November 2026.',
-    alternativeProId: 'pro_kol_4',
+    availabilityType: 'available_now',
     skills: ['AC Repair', 'Jet Foam Wash', 'Gas Recharge', 'PCB Repair', 'Compressor Check'],
     location: { city: 'Kolkata', address: 'Park Street, Kolkata', coordinates: [88.3524, 22.5511] },
     services: [
@@ -116,8 +125,6 @@ export const FALLBACK_PROS = [
     trustTier: 'Verified Master',
     verificationStatus: 'VERIFIED',
     availabilityType: 'available_now',
-    leadTimeNotice: 'Available Tomorrow with open slots!',
-    alternativeProId: 'pro_kol_3',
     skills: ['AC Repair', 'Water Leakage', 'Capacitor Change', 'Filter Cleaning'],
     location: { city: 'Kolkata', address: 'New Town Action Area 2, Kolkata', coordinates: [88.4812, 22.5955] },
     services: [
@@ -184,9 +191,9 @@ export const FALLBACK_PROS = [
     },
   },
 
-  // ==========================================
+  // =========================================================================
   // 2. BENGALURU PROFESSIONALS
-  // ==========================================
+  // =========================================================================
   {
     _id: 'pro_blr_1',
     businessName: 'Silicon Valley Electricals & Smart Wiring',
@@ -296,9 +303,9 @@ export const FALLBACK_PROS = [
     },
   },
 
-  // ==========================================
+  // =========================================================================
   // 3. DELHI NCR PROFESSIONALS
-  // ==========================================
+  // =========================================================================
   {
     _id: 'pro_del_1',
     businessName: 'Capital Power & Electrical Solutions',
@@ -381,9 +388,9 @@ export const FALLBACK_PROS = [
     },
   },
 
-  // ==========================================
+  // =========================================================================
   // 4. MUMBAI PROFESSIONALS
-  // ==========================================
+  // =========================================================================
   {
     _id: 'pro_mum_1',
     businessName: 'Coastal City Electricals & Inverters',
@@ -466,9 +473,9 @@ export const FALLBACK_PROS = [
     },
   },
 
-  // ==========================================
+  // =========================================================================
   // 5. HYDERABAD PROFESSIONALS
-  // ==========================================
+  // =========================================================================
   {
     _id: 'pro_hyd_1',
     businessName: 'CyberCity Electricals & Automation',
@@ -524,9 +531,9 @@ export const FALLBACK_PROS = [
     },
   },
 
-  // ==========================================
+  // =========================================================================
   // 6. CHENNAI PROFESSIONALS
-  // ==========================================
+  // =========================================================================
   {
     _id: 'pro_chn_1',
     businessName: 'Coromandel Electricals & Power Systems',
@@ -582,9 +589,9 @@ export const FALLBACK_PROS = [
     },
   },
 
-  // ==========================================
+  // =========================================================================
   // 7. PUNE PROFESSIONALS
-  // ==========================================
+  // =========================================================================
   {
     _id: 'pro_pun_1',
     businessName: 'Deccan Heritage Electricals',
@@ -637,6 +644,296 @@ export const FALLBACK_PROS = [
     userId: {
       name: 'Pratik Kulkarni',
       avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=250&q=80',
+    },
+  },
+
+  // =========================================================================
+  // 8. AHMEDABAD PROFESSIONALS
+  // =========================================================================
+  {
+    _id: 'pro_ahd_1',
+    businessName: 'Sabarmati Power & Electrical Craft',
+    ownerName: 'Jignesh Patel',
+    category: 'electrician',
+    tagline: 'Precision Domestic & Commercial Electricals • Lead: Jignesh Patel',
+    description: 'Serving SG Highway, Satellite, Navrangpura, and Bodakdev. Advanced circuit tracing, solar inverter sync, LED architectural lighting, and switchboard renewals.',
+    experienceYears: 9,
+    rating: 4.9,
+    totalReviews: 77,
+    completedJobs: 77,
+    responseRate: 98,
+    trustScore: 94,
+    trustTier: 'Elite Pro',
+    verificationStatus: 'VERIFIED',
+    availabilityType: 'available_now',
+    skills: ['Electrician', 'Solar Inverter', 'LED Track Light', 'Switchboard', 'Phase Load'],
+    location: { city: 'Ahmedabad', address: 'SG Highway, Bodakdev, Ahmedabad', coordinates: [72.5074, 23.0378] },
+    services: [
+      { name: 'Household Electrical Load & Breaker Diagnostics', slug: 'electrician', price: 299, priceType: 'starts_at', description: 'Full MCB box safety testing.' },
+      { name: 'Modular Switchboard Overhaul', slug: 'electrician', price: 449, priceType: 'fixed', description: 'Clean concealed box fitting with heat-resistant copper wires.' },
+    ],
+    userId: {
+      name: 'Jignesh Patel',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
+    },
+  },
+  {
+    _id: 'pro_ahd_2',
+    businessName: 'Gujarat Cooling & AC Express Care',
+    ownerName: 'Manish Shah',
+    category: 'ac-repair',
+    tagline: 'High Ambient AC Specialists • Lead: Manish Shah',
+    description: 'Specializing in split AC performance during hot Gujarat summers in Satellite, Vastrapur, and Prahlad Nagar. Complete coil cleaning, pressure tests, and gas recharge.',
+    experienceYears: 8,
+    rating: 4.8,
+    totalReviews: 69,
+    completedJobs: 69,
+    responseRate: 97,
+    trustScore: 93,
+    trustTier: 'Elite Pro',
+    verificationStatus: 'VERIFIED',
+    availabilityType: 'available_now',
+    skills: ['AC Repair', 'Jet Foam Wash', 'Gas Recharge', 'Inverter AC', 'Coil Leakage'],
+    location: { city: 'Ahmedabad', address: 'Satellite Road, Ahmedabad', coordinates: [72.5284, 23.0258] },
+    services: [
+      { name: 'Foam Jet Pressure Service for Split AC', slug: 'ac-repair', price: 549, priceType: 'fixed', description: 'Deep wash of internal coils and outdoor condenser fins.' },
+      { name: 'R32 Eco Refrigerant Refill with Leak Test', slug: 'ac-repair', price: 1899, priceType: 'starts_at', description: 'Nitrogen leak identification and vacuum charging.' },
+    ],
+    userId: {
+      name: 'Manish Shah',
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80',
+    },
+  },
+
+  // =========================================================================
+  // 9. JAIPUR PROFESSIONALS
+  // =========================================================================
+  {
+    _id: 'pro_jai_1',
+    businessName: 'Pink City Royal Electricals',
+    ownerName: 'Vikram Singh Shekhawat',
+    category: 'electrician',
+    tagline: 'Heritage & Modern Home Electricals • Lead: Vikram Singh',
+    description: 'Expert residential electrician serving Malviya Nagar, Vaishali Nagar, C-Scheme, and Mansarovar. Heritage home rewiring, chandelier mounting, and emergency diagnostics.',
+    experienceYears: 11,
+    rating: 4.9,
+    totalReviews: 83,
+    completedJobs: 83,
+    responseRate: 99,
+    trustScore: 95,
+    trustTier: 'Elite Pro',
+    verificationStatus: 'VERIFIED',
+    availabilityType: 'available_now',
+    skills: ['Electrician', 'Chandelier Mounting', 'Heritage Rewiring', 'Short Circuit', 'Inverter Setup'],
+    location: { city: 'Jaipur', address: 'C-Scheme (Ashok Nagar), Jaipur', coordinates: [75.8015, 26.9124] },
+    services: [
+      { name: 'Short-Circuit Emergency Inspection & Resolution', slug: 'electrician', price: 349, priceType: 'starts_at', description: 'Rapid fault tracing with digital multimeter and safe rewiring.' },
+      { name: 'Heavy Crystal Chandelier & Pendant Mounting', slug: 'electrician', price: 699, priceType: 'fixed', description: 'Anchor bolt ceiling fixing with structural load test.' },
+    ],
+    userId: {
+      name: 'Vikram Singh Shekhawat',
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=250&q=80',
+    },
+  },
+  {
+    _id: 'pro_jai_2',
+    businessName: 'Thar Plumbers & Sanitary Works',
+    ownerName: 'Mohan Lal Meena',
+    category: 'plumber',
+    tagline: 'Water Conservation & Pressure Systems • Lead: Mohan Lal',
+    description: 'Specialist in hard-water descaling, pressure boosting pumps, overhead tank automation, and sanitary fittings in Vaishali Nagar and Malviya Nagar.',
+    experienceYears: 10,
+    rating: 4.8,
+    totalReviews: 75,
+    completedJobs: 75,
+    responseRate: 98,
+    trustScore: 92,
+    trustTier: 'Elite Pro',
+    verificationStatus: 'VERIFIED',
+    availabilityType: 'available_now',
+    skills: ['Plumbing', 'Hard Water Descaling', 'Pressure Pump', 'Overhead Tank', 'Tap Repair'],
+    location: { city: 'Jaipur', address: 'Vaishali Nagar, Jaipur', coordinates: [75.7424, 26.9048] },
+    services: [
+      { name: 'Hard Water Limescale Cleaning for Geysers & Pipes', slug: 'plumber', price: 449, priceType: 'fixed', description: 'Chemical-free ultrasonic flush to restore full flow.' },
+      { name: 'Concealed Water Leakage Repair & Valve Tuning', slug: 'plumber', price: 399, priceType: 'starts_at', description: 'Pipe inspection and quality PVC replacement.' },
+    ],
+    userId: {
+      name: 'Mohan Lal Meena',
+      avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=250&q=80',
+    },
+  },
+
+  // =========================================================================
+  // 10. CHANDIGARH PROFESSIONALS
+  // =========================================================================
+  {
+    _id: 'pro_chd_1',
+    businessName: 'City Beautiful Electrical Works',
+    ownerName: 'Harpreet Singh Dhillon',
+    category: 'electrician',
+    tagline: 'Architectural & Smart Home Wiring • Lead: Harpreet Singh',
+    description: 'Serving Chandigarh Sector 17, Sector 35, Mohali Phase 7, and Panchkula. Smart switches, distribution board revamps, inverter installations, and EV chargers.',
+    experienceYears: 10,
+    rating: 4.9,
+    totalReviews: 86,
+    completedJobs: 86,
+    responseRate: 99,
+    trustScore: 96,
+    trustTier: 'Elite Pro',
+    verificationStatus: 'VERIFIED',
+    availabilityType: 'available_now',
+    skills: ['Electrician', 'Smart Switch', 'EV Charger', 'Short Circuit', 'DB Overhaul'],
+    location: { city: 'Chandigarh', address: 'Sector 35-B, Chandigarh', coordinates: [76.7681, 30.7227] },
+    services: [
+      { name: 'Comprehensive Electrical Safety Audit & Repair', slug: 'electrician', price: 349, priceType: 'starts_at', description: 'Complete testing of grounding and breakers.' },
+      { name: 'Smart Home Touch Panel Installation', slug: 'electrician', price: 799, priceType: 'fixed', description: 'Multi-channel wireless automation setup.' },
+    ],
+    userId: {
+      name: 'Harpreet Singh Dhillon',
+      avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=250&q=80',
+    },
+  },
+  {
+    _id: 'pro_chd_2',
+    businessName: 'Shivalik Air Conditioning & Heating',
+    ownerName: 'Gurmeet Singh',
+    category: 'ac-repair',
+    tagline: 'Dual Cycle Hot & Cold AC Specialist • Lead: Gurmeet Singh',
+    description: 'Doorstep AC and heat pump servicing across Chandigarh, Mohali, and Zirakpur. Jet pump coil wash, PCB diagnostics, and pressurized refrigerant top-up.',
+    experienceYears: 8,
+    rating: 4.8,
+    totalReviews: 71,
+    completedJobs: 71,
+    responseRate: 97,
+    trustScore: 93,
+    trustTier: 'Elite Pro',
+    verificationStatus: 'VERIFIED',
+    availabilityType: 'available_now',
+    skills: ['AC Repair', 'Hot & Cold AC', 'Jet Foam Wash', 'Gas Recharge', 'Blower Motor'],
+    location: { city: 'Chandigarh', address: 'Sector 17, Chandigarh', coordinates: [76.7794, 30.7415] },
+    services: [
+      { name: 'Jet Pump Double Foam Cleaning Service', slug: 'ac-repair', price: 549, priceType: 'fixed', description: 'Intensive high pressure cleaning for indoor and outdoor units.' },
+      { name: 'Complete Gas Leak Detection & Gas Fill', slug: 'ac-repair', price: 1899, priceType: 'starts_at', description: 'Nitrogen test and genuine R32 refrigerant.' },
+    ],
+    userId: {
+      name: 'Gurmeet Singh',
+      avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=250&q=80',
+    },
+  },
+
+  // =========================================================================
+  // 11. LUCKNOW PROFESSIONALS
+  // =========================================================================
+  {
+    _id: 'pro_lko_1',
+    businessName: 'Awadh Electrical & Power Solutions',
+    ownerName: 'Mohammad Rizwan',
+    category: 'electrician',
+    tagline: 'Certified Domestic Electrician • Lead: Mohammad Rizwan',
+    description: 'Serving Hazratganj, Gomti Nagar, Aliganj, and Indira Nagar. Reliable electrical maintenance, inverter backup wiring, safety MCB upgrades, and fault tracing.',
+    experienceYears: 9,
+    rating: 4.8,
+    totalReviews: 73,
+    completedJobs: 73,
+    responseRate: 98,
+    trustScore: 93,
+    trustTier: 'Elite Pro',
+    verificationStatus: 'VERIFIED',
+    availabilityType: 'available_now',
+    skills: ['Electrician', 'Inverter Wiring', 'Short Circuit', 'Fan Fitting', 'Switchboard Setup'],
+    location: { city: 'Lucknow', address: 'Gomti Nagar (Vibhav Khand), Lucknow', coordinates: [80.9950, 26.8530] },
+    services: [
+      { name: 'Rapid Household Short-Circuit & Wiring Repair', slug: 'electrician', price: 299, priceType: 'starts_at', description: 'Safe troubleshooting and repair with fire-retardant wiring.' },
+      { name: 'Inverter & High Capacity Battery Connection', slug: 'electrician', price: 649, priceType: 'fixed', description: 'Heavy gauge wiring with safe bypass switch.' },
+    ],
+    userId: {
+      name: 'Mohammad Rizwan',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+    },
+  },
+  {
+    _id: 'pro_lko_2',
+    businessName: 'Nawab City Plumbers & Drainage Express',
+    ownerName: 'Akhilesh Yadav',
+    category: 'plumber',
+    tagline: 'Fast Response Sanitary & Pipe Specialists • Lead: Akhilesh Yadav',
+    description: 'Expert plumbing across Gomti Nagar Extension, Hazratganj, and Alambagh. Hydro-snake drain clearing, bathroom fittings, water tank float setup, and pipeline repairs.',
+    experienceYears: 8,
+    rating: 4.8,
+    totalReviews: 67,
+    completedJobs: 67,
+    responseRate: 97,
+    trustScore: 91,
+    trustTier: 'Elite Pro',
+    verificationStatus: 'VERIFIED',
+    availabilityType: 'available_now',
+    skills: ['Plumbing', 'Drain Cleaning', 'Mixer Taps', 'Overhead Tank', 'Geyser Connection'],
+    location: { city: 'Lucknow', address: 'Hazratganj, Lucknow', coordinates: [80.9462, 26.8467] },
+    services: [
+      { name: 'Motorized Steel Snake Drain Unclogging', slug: 'plumber', price: 499, priceType: 'fixed', description: 'Clears hair, grease, and debris without damaging pipes.' },
+      { name: 'Bathroom Tap, Shower & Diverter Replacement', slug: 'plumber', price: 349, priceType: 'starts_at', description: 'Precision multi-point fitting.' },
+    ],
+    userId: {
+      name: 'Akhilesh Yadav',
+      avatar: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?auto=format&fit=crop&w=250&q=80',
+    },
+  },
+
+  // =========================================================================
+  // 12. KOCHI PROFESSIONALS
+  // =========================================================================
+  {
+    _id: 'pro_koc_1',
+    businessName: 'Cochin Coastal Electricals',
+    ownerName: 'Antony Joseph',
+    category: 'electrician',
+    tagline: 'Marine Grade Moisture-Resistant Electricals • Lead: Antony Joseph',
+    description: 'Serving MG Road, Kakkanad InfoPark, Panampilly Nagar, and Edappally. Specialized in tropical moisture protection, earthing safety, surge arresters, and smart lighting.',
+    experienceYears: 10,
+    rating: 4.9,
+    totalReviews: 84,
+    completedJobs: 84,
+    responseRate: 99,
+    trustScore: 95,
+    trustTier: 'Elite Pro',
+    verificationStatus: 'VERIFIED',
+    availabilityType: 'available_now',
+    skills: ['Electrician', 'Surge Arrester', 'Moisture Proofing', 'Inverter Setup', 'Smart Switch'],
+    location: { city: 'Kochi', address: 'Panampilly Nagar, Kochi', coordinates: [76.2954, 9.9610] },
+    services: [
+      { name: 'Lightning & Voltage Surge Protector Installation', slug: 'electrician', price: 599, priceType: 'fixed', description: 'Complete surge protector connection on mains DB.' },
+      { name: 'Concealed Damp-Proof Wiring Repair', slug: 'electrician', price: 349, priceType: 'starts_at', description: 'Weatherproof conduit and insulated wire replacement.' },
+    ],
+    userId: {
+      name: 'Antony Joseph',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
+    },
+  },
+  {
+    _id: 'pro_koc_2',
+    businessName: 'Malabar Cool Care & Air Conditioning',
+    ownerName: 'Pradeep Nair',
+    category: 'ac-repair',
+    tagline: 'Anti-Rust Coating & High Efficiency Servicing • Lead: Pradeep Nair',
+    description: 'Expert AC maintenance in Kakkanad, Fort Kochi, and Aluva. Anti-fungal foam wash, drainage pipe unclogging, and non-corrosive copper coil treatment.',
+    experienceYears: 9,
+    rating: 4.8,
+    totalReviews: 76,
+    completedJobs: 76,
+    responseRate: 98,
+    trustScore: 93,
+    trustTier: 'Elite Pro',
+    verificationStatus: 'VERIFIED',
+    availabilityType: 'available_now',
+    skills: ['AC Repair', 'Anti-Fungal Wash', 'Gas Recharge', 'Drain Cleaning', 'Coil Coating'],
+    location: { city: 'Kochi', address: 'Kakkanad (Near InfoPark), Kochi', coordinates: [76.3575, 10.0159] },
+    services: [
+      { name: 'Anti-Bacterial Foam Jet Pressure Cleaning', slug: 'ac-repair', price: 549, priceType: 'fixed', description: 'Kills mold, clears coil fins, and optimizes cooling performance.' },
+      { name: 'Outdoor Condenser Rust Barrier Treatment', slug: 'ac-repair', price: 499, priceType: 'fixed', description: 'Epoxy resin protective coat against tropical humidity.' },
+    ],
+    userId: {
+      name: 'Pradeep Nair',
+      avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=250&q=80',
     },
   },
 ];
