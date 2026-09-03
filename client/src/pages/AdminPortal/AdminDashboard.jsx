@@ -27,6 +27,8 @@ import {
   EyeOff,
   Lock,
   Copy,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { FALLBACK_PROS, FALLBACK_CATEGORIES } from '../../utils/mockData';
@@ -301,6 +303,16 @@ export default function AdminDashboard() {
   const [newUserPhone, setNewUserPhone] = useState('');
   const [createUserError, setCreateUserError] = useState('');
   const [createUserLoading, setCreateUserLoading] = useState(false);
+
+  // User Directory Pagination & Filtering
+  const [userPage, setUserPage] = useState(1);
+  const usersPerPage = 10;
+  const [userSearch, setUserSearch] = useState('');
+  const [userRoleFilter, setUserRoleFilter] = useState('all');
+
+  useEffect(() => {
+    setUserPage(1);
+  }, [userSearch, userRoleFilter]);
 
   // New Category State
   const [newCatName, setNewCatName] = useState('');
@@ -603,6 +615,38 @@ export default function AdminDashboard() {
 
   const pendingPros = professionals.filter((p) => p.verificationStatus === 'PENDING');
   const openDisputes = disputesList.filter((d) => d.status === 'OPEN' || d.status === 'UNDER_REVIEW');
+
+  // User Directory Pagination Calculation
+  const filteredUsers = usersList.filter((u) => {
+    const term = userSearch.toLowerCase().trim();
+    const matchesSearch =
+      !term ||
+      u.name?.toLowerCase().includes(term) ||
+      u.email?.toLowerCase().includes(term) ||
+      (u.location?.city || u.city || '')?.toLowerCase().includes(term) ||
+      (u.phone || '')?.toLowerCase().includes(term);
+    const matchesRole = userRoleFilter === 'all' || u.role === userRoleFilter;
+    return matchesSearch && matchesRole;
+  });
+
+  const totalUserPages = Math.max(1, Math.ceil(filteredUsers.length / usersPerPage));
+  const paginatedUsers = filteredUsers.slice(
+    (userPage - 1) * usersPerPage,
+    userPage * usersPerPage
+  );
+
+  const getPaginationItems = (current, total) => {
+    if (total <= 7) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    if (current <= 4) {
+      return [1, 2, 3, 4, 5, '...', total];
+    }
+    if (current >= total - 3) {
+      return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+    }
+    return [1, '...', current - 1, current, current + 1, '...', total];
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 text-xs">
@@ -939,11 +983,54 @@ export default function AdminDashboard() {
             </div>
             <button
               onClick={() => setShowCreateUserModal(true)}
-              className="px-3.5 py-2 rounded-xl bg-teal-400 hover:bg-teal-300 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition shadow-lg shadow-teal-500/20"
+              className="px-3.5 py-2 rounded-xl bg-teal-400 hover:bg-teal-300 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition shadow-lg shadow-teal-500/20 shrink-0"
             >
               <UserPlus className="w-4 h-4" />
               <span>Create User / Admin</span>
             </button>
+          </div>
+
+          {/* Search & Filter Controls */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                placeholder="Search user by name, email, or city..."
+                className="w-full pl-9 pr-7 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-teal-500/50"
+              />
+              {userSearch && (
+                <button
+                  onClick={() => setUserSearch('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1.5 overflow-x-auto">
+              {[
+                { id: 'all', label: `All (${usersList.length})` },
+                { id: 'customer', label: `Customers (${usersList.filter((u) => u.role === 'customer').length})` },
+                { id: 'professional', label: `Pros (${usersList.filter((u) => u.role === 'professional').length})` },
+                { id: 'admin', label: `Admins (${usersList.filter((u) => u.role === 'admin').length})` },
+              ].map((rf) => (
+                <button
+                  key={rf.id}
+                  onClick={() => setUserRoleFilter(rf.id)}
+                  className={`px-3 py-1.5 rounded-xl font-bold transition text-[11px] shrink-0 ${
+                    userRoleFilter === rf.id
+                      ? 'bg-teal-400 text-slate-950 shadow'
+                      : 'bg-slate-950 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-900'
+                  }`}
+                >
+                  {rf.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="overflow-x-auto">
@@ -958,109 +1045,181 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
-                {usersList.map((u) => {
-                  const isMasterOwner = u.email === 'admin@localx.app';
-                  return (
-                    <tr key={u._id} className="hover:bg-slate-900/40">
-                      <td className="py-3 flex items-center gap-2.5">
-                        <img
-                          src={u.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80'}
-                          alt=""
-                          className="w-8 h-8 rounded-full object-cover border border-slate-700"
-                        />
-                        <div>
-                          <div className="flex items-center gap-1.5">
-                            <p className="font-bold text-white">{u.name}</p>
-                            {isMasterOwner && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/40 text-amber-300 font-extrabold text-[10px] uppercase">
-                                <Crown className="w-3 h-3 text-amber-400 fill-amber-400" />
-                                Master Owner
-                              </span>
-                            )}
+                {paginatedUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="py-8 text-center text-slate-400">
+                      No accounts matched your search filter "{userSearch}".
+                    </td>
+                  </tr>
+                ) : (
+                  paginatedUsers.map((u) => {
+                    const isMasterOwner = u.email === 'admin@localx.app';
+                    return (
+                      <tr key={u._id} className="hover:bg-slate-900/40">
+                        <td className="py-3 flex items-center gap-2.5">
+                          <img
+                            src={u.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80'}
+                            alt=""
+                            className="w-8 h-8 rounded-full object-cover border border-slate-700 shrink-0"
+                          />
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <p className="font-bold text-white">{u.name}</p>
+                              {isMasterOwner && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/40 text-amber-300 font-extrabold text-[10px] uppercase">
+                                  <Crown className="w-3 h-3 text-amber-400 fill-amber-400" />
+                                  Master Owner
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-slate-400">{u.email}</p>
                           </div>
-                          <p className="text-[11px] text-slate-400">{u.email}</p>
-                        </div>
-                      </td>
-                      <td>
-                        {isMasterOwner ? (
-                          <span className="px-2 py-1 rounded font-bold text-[10px] bg-amber-500/10 text-amber-300 border border-amber-500/30">
-                            MASTER ADMIN (IMMUTABLE)
-                          </span>
-                        ) : (
-                          <select
-                            value={u.role}
-                            onChange={(e) => handleUpdateUserRole(u._id, e.target.value)}
-                            className="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-700 text-white font-semibold text-[11px] cursor-pointer focus:outline-none focus:border-teal-400"
-                          >
-                            <option value="customer" className="bg-slate-900 text-white">Customer</option>
-                            <option value="professional" className="bg-slate-900 text-white">Professional</option>
-                            <option value="admin" className="bg-slate-900 text-rose-400 font-bold">Admin</option>
-                          </select>
-                        )}
-                      </td>
-                      <td className="text-slate-400">{u.location?.city || u.city || 'Kolkata'}</td>
-                      <td>
-                        <span
-                          className={`px-2 py-0.5 rounded font-bold text-[10px] ${
-                            u.status === 'active' ? 'text-teal-400 bg-teal-500/10' : 'text-rose-400 bg-rose-500/10'
-                          }`}
-                        >
-                          {u.status || 'active'}
-                        </span>
-                      </td>
-                      <td className="text-right space-x-2">
-                        {u.role === 'admin' && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedAdminForCredentials(u);
-                              setShowPassword(false);
-                              setCopiedText('');
-                            }}
-                            className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 transition inline-flex items-center gap-1 shadow-sm"
-                            title="Master Security: Inspect Admin Credentials & Passcode"
-                          >
-                            <Key className="w-3.5 h-3.5 text-amber-400" />
-                            <span>View Admin ID & Passcode</span>
-                          </button>
-                        )}
-                        {u.role !== 'admin' && (
+                        </td>
+                        <td>
+                          {isMasterOwner ? (
+                            <span className="px-2 py-1 rounded font-bold text-[10px] bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                              MASTER ADMIN (IMMUTABLE)
+                            </span>
+                          ) : (
+                            <select
+                              value={u.role}
+                              onChange={(e) => handleUpdateUserRole(u._id, e.target.value)}
+                              className="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-700 text-white font-semibold text-[11px] cursor-pointer focus:outline-none focus:border-teal-400"
+                            >
+                              <option value="customer" className="bg-slate-900 text-white">Customer</option>
+                              <option value="professional" className="bg-slate-900 text-white">Professional</option>
+                              <option value="admin" className="bg-slate-900 text-rose-400 font-bold">Admin</option>
+                            </select>
+                          )}
+                        </td>
+                        <td className="text-slate-400">{u.location?.city || u.city || 'Kolkata'}</td>
+                        <td>
                           <span
-                            className="text-[10px] text-slate-400 font-medium italic border border-slate-800/80 px-2 py-0.5 rounded-md bg-slate-950/80 inline-flex items-center gap-1"
-                            title="Customer and Professional credentials are end-to-end encrypted and confidential"
+                            className={`px-2 py-0.5 rounded font-bold text-[10px] ${
+                              u.status === 'active' ? 'text-teal-400 bg-teal-500/10' : 'text-rose-400 bg-rose-500/10'
+                            }`}
                           >
-                            <Lock className="w-3 h-3 text-slate-400" />
-                            <span>Confidential ID</span>
+                            {u.status || 'active'}
                           </span>
-                        )}
-                        {!isMasterOwner && (
-                          <>
+                        </td>
+                        <td className="text-right space-x-2">
+                          {u.role === 'admin' && (
                             <button
-                              onClick={() => handleToggleUserStatus(u._id, u.status || 'active')}
-                              className={`px-2.5 py-1 rounded text-[11px] font-semibold border transition ${
-                                u.status === 'suspended'
-                                  ? 'border-teal-500/40 text-teal-400 hover:bg-teal-500/10'
-                                  : 'border-amber-500/40 text-amber-400 hover:bg-amber-500/10'
-                              }`}
+                              type="button"
+                              onClick={() => {
+                                setSelectedAdminForCredentials(u);
+                                setShowPassword(false);
+                                setCopiedText('');
+                              }}
+                              className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 transition inline-flex items-center gap-1 shadow-sm"
+                              title="Master Security: Inspect Admin Credentials & Passcode"
                             >
-                              {u.status === 'suspended' ? 'Reactivate' : 'Suspend'}
+                              <Key className="w-3.5 h-3.5 text-amber-400" />
+                              <span>View Admin ID & Passcode</span>
                             </button>
-                            <button
-                              onClick={() => handleDeleteUser(u._id, u.name, u.email)}
-                              title="Delete User"
-                              className="p-1 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition inline-block align-middle"
+                          )}
+                          {u.role !== 'admin' && (
+                            <span
+                              className="text-[10px] text-slate-400 font-medium italic border border-slate-800/80 px-2 py-0.5 rounded-md bg-slate-950/80 inline-flex items-center gap-1"
+                              title="Customer and Professional credentials are end-to-end encrypted and confidential"
                             >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
+                              <Lock className="w-3 h-3 text-slate-400" />
+                              <span>Confidential ID</span>
+                            </span>
+                          )}
+                          {!isMasterOwner && (
+                            <>
+                              <button
+                                onClick={() => handleToggleUserStatus(u._id, u.status || 'active')}
+                                className={`px-2.5 py-1 rounded text-[11px] font-semibold border transition ${
+                                  u.status === 'suspended'
+                                    ? 'border-teal-500/40 text-teal-400 hover:bg-teal-500/10'
+                                    : 'border-amber-500/40 text-amber-400 hover:bg-amber-500/10'
+                                }`}
+                              >
+                                {u.status === 'suspended' ? 'Reactivate' : 'Suspend'}
+                              </button>
+                              <button
+                                onClick={() => handleDeleteUser(u._id, u.name, u.email)}
+                                title="Delete User"
+                                className="p-1 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition inline-block align-middle"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
+
+          {/* User Directory Pagination Controls */}
+          {totalUserPages > 1 && (
+            <div className="pt-4 pb-2 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-xs text-slate-400">
+                Showing <strong className="text-white">{(userPage - 1) * usersPerPage + 1}</strong> to{' '}
+                <strong className="text-white">{Math.min(userPage * usersPerPage, filteredUsers.length)}</strong> of{' '}
+                <strong className="text-teal-400">{filteredUsers.length}</strong> accounts
+              </p>
+
+              <div className="flex items-center gap-1.5 text-xs font-bold">
+                {/* Previous Page */}
+                <button
+                  type="button"
+                  onClick={() => setUserPage((p) => Math.max(1, p - 1))}
+                  disabled={userPage === 1}
+                  className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-40 disabled:pointer-events-none transition flex items-center gap-1"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Prev</span>
+                </button>
+
+                {/* Numbered Page Buttons with Dots */}
+                {getPaginationItems(userPage, totalUserPages).map((item, idx) => {
+                  if (item === '...') {
+                    return (
+                      <span
+                        key={`dots-${idx}`}
+                        className="w-7 h-8 flex items-center justify-center text-slate-500 font-extrabold select-none text-xs"
+                      >
+                        …
+                      </span>
+                    );
+                  }
+                  const pageNum = Number(item);
+                  return (
+                    <button
+                      key={pageNum}
+                      type="button"
+                      onClick={() => setUserPage(pageNum)}
+                      className={`w-8 h-8 rounded-xl flex items-center justify-center transition font-bold text-xs ${
+                        userPage === pageNum
+                          ? 'bg-teal-400 text-slate-950 font-black shadow-lg shadow-teal-500/25 scale-105'
+                          : 'bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+
+                {/* Next Page */}
+                <button
+                  type="button"
+                  onClick={() => setUserPage((p) => Math.min(totalUserPages, p + 1))}
+                  disabled={userPage === totalUserPages}
+                  className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-40 disabled:pointer-events-none transition flex items-center gap-1"
+                >
+                  <span>Next</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
