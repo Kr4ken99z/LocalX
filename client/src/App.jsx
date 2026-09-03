@@ -49,10 +49,10 @@ function MainLayout() {
   const [selectedCity, setSelectedCity] = useState('Kolkata');
   const location = useLocation();
 
-  const isHome = location.pathname === '/' || location.pathname === '';
-  const videoUrl = isHome
-    ? 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663881845200/JaabPndEbiPjucfU.mp4'
-    : 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663881845200/CqoPdbDWLUHNoBie.mp4';
+  const isAuth = location.pathname.startsWith('/login') || location.pathname.startsWith('/register');
+  const videoUrl = isAuth
+    ? 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663881845200/CqoPdbDWLUHNoBie.mp4'
+    : 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663881845200/JaabPndEbiPjucfU.mp4';
 
   return (
     <div className="min-h-screen flex flex-col bg-[#080f1c] text-slate-100 antialiased selection:bg-teal-500 selection:text-white relative">

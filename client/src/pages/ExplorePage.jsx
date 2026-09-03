@@ -133,7 +133,61 @@ export default function ExplorePage({ selectedCity = 'Kolkata', onSelectCity }) 
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      {/* Explore Hero Banner (Matching Image 3) */}
+      <div className="relative rounded-3xl overflow-hidden border border-slate-700/60 bg-[#0c1424]/90 p-8 sm:p-12 shadow-2xl backdrop-blur-xl">
+        {/* Ambient ray light glow */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-60"
+          style={{
+            background: 'radial-gradient(ellipse 60% 80% at 50% -20%, rgba(245, 158, 11, 0.28) 0%, rgba(245, 158, 11, 0.06) 45%, transparent 75%)',
+          }}
+        />
+        {/* Subtle grid pattern overlay */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-10"
+          style={{
+            backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)',
+            backgroundSize: '32px 32px',
+          }}
+        />
+
+        <div className="relative z-10 max-w-3xl space-y-4">
+          <span className="text-[11px] font-bold text-amber-300 tracking-[0.25em] uppercase block">
+            YOU HAVE ARRIVED · LOCALX IS HERE
+          </span>
+          <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-[1.15]">
+            Somewhere unknown?<br />
+            <span className="text-teal-400">Start with LocalX.</span>
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
+            When every street feels unfamiliar, LocalX becomes your local signal. Find verified professionals nearby and get the help you need to feel at home again.
+          </p>
+          <div className="flex flex-wrap items-center gap-4 pt-2">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-950/80 border border-teal-500/50 text-teal-300 text-xs font-bold shadow-inner">
+              <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>
+              YOUR LOCAL SIGNAL IS ACTIVE
+            </div>
+            <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 tracking-wider uppercase">
+              SCROLL TO DISCOVER TRUSTED HELP
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Service Discovery Heading */}
+      <div className="space-y-1">
+        <span className="text-[11px] font-extrabold text-amber-400 uppercase tracking-widest block">
+          SERVICE DISCOVERY
+        </span>
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
+          Find trusted help near you.
+        </h2>
+        <p className="text-xs text-slate-400 max-w-2xl">
+          Search verified professionals by distance, service, rating, price, and availability. Your coordinates are used only to find nearby providers.
+        </p>
+      </div>
+
       {/* Top Filter Bar */}
       <div className="glass-panel p-4 rounded-2xl space-y-4">
         <div className="flex flex-col lg:flex-row items-center justify-between gap-4">

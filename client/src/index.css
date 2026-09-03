@@ -56,9 +56,11 @@
   background: radial-gradient(circle at 50% 20%, rgba(45, 212, 191, 0.12) 0%, rgba(139, 92, 246, 0.08) 35%, transparent 70%);
 }
 
-/* Leaflet map dark mode invert filter for dark theme */
-.dark-map .leaflet-tile {
-  filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+/* Leaflet map dark mode invert filter for clean zero-key tiles */
+.dark-map .leaflet-tile,
+.dark-map-tiles,
+.leaflet-tile.dark-map-tiles {
+  filter: brightness(0.6) invert(1) contrast(2.8) hue-rotate(205deg) saturate(0.25) brightness(0.85) !important;
 }
 
 /* Background video styles matching demo */

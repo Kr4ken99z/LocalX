@@ -49,10 +49,11 @@ export default function LeafletMap({ professionals = [], center = [12.9716, 77.5
         style={{ height: '100%', width: '100%', backgroundColor: '#080f1c' }}
       >
         <MapUpdater center={center} zoom={zoom} />
-        {/* Dark-themed tile layer */}
+        {/* Sleek Dark-Themed Tiles (100% Free & No API Key Watermarks) */}
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> & CartoDB'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          className="dark-map-tiles"
         />
 
         {professionals.map((pro) => {

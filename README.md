@@ -2,7 +2,7 @@
 
 > A production-grade Hyperlocal Marketplace connecting customers with verified local service professionals with an integrated Admin Governance Portal.
 
-![LocalX Platform](https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1200&q=80)
+![LocalX Platform](./localx-hero.png)
 
 ---
 
