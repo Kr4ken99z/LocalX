@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Zap, Lock, Mail, AlertCircle, Sun, Shield } from 'lucide-react';
+import { Zap, Lock, Mail, AlertCircle, Shield } from 'lucide-react';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -104,18 +104,7 @@ export default function LoginPage() {
 
         {/* Right Form Panel */}
         <div className="lg:col-span-7 p-8 sm:p-10 flex flex-col justify-between relative bg-[#091120]/80">
-          {/* Top theme pill */}
-          <div className="flex items-center justify-end mb-4">
-            <button
-              type="button"
-              className="w-8 h-8 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center text-amber-400 hover:text-amber-300 transition"
-              title="Toggle theme"
-            >
-              <Sun className="w-4 h-4" />
-            </button>
-          </div>
-
-          <div className="max-w-md w-full mx-auto space-y-6">
+          <div className="max-w-md w-full mx-auto space-y-6 pt-2">
             <div className="space-y-1">
               <h1 className="text-2xl font-black text-white">Welcome back</h1>
               <p className="text-slate-400 text-xs">Sign in to manage your LocalX account.</p>
