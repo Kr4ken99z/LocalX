@@ -59,9 +59,9 @@ export default function ExplorePage({ selectedCity = 'Kolkata', onSelectCity }) 
   const [isLocating, setIsLocating] = useState(false);
   const [mapEngine, setMapEngine] = useState('google'); // 'google' | 'osm'
 
-  // Pagination State (Requested by user: pages 1 to 5 with rich demos)
+  // Pagination State (Requested by user: 7-8 professionals per page)
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 4;
+  const itemsPerPage = 8;
 
   // Booking Modal
   const [activeBookingPro, setActiveBookingPro] = useState(null);
