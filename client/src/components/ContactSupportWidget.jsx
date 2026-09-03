@@ -15,17 +15,32 @@ import {
 const QUICK_QUESTIONS = [
   'How do I book a specialist in Kolkata?',
   'What is Escrow Payment Protection?',
+  'What if a pro is booked in Sept/Oct?',
   'How do I register as a service specialist?',
-  'What if a specialist is fully booked in Sept/Oct?',
+  'What areas in Kolkata do you serve?',
 ];
 
+// System Prompt for LocalX AI Concierge
+const AI_CONCIERGE_SYSTEM_PROMPT = `
+You are LocalX AI Concierge — the dedicated intelligent assistant for LocalX Hyperlocal Network in Kolkata.
+Mission: Provide instant, reliable answers to Kolkata residents seeking verified electricians, AC mechanics, plumbers, carpenters, cleaners, painters, pest exterminators, and CCTV specialists.
+
+Pillars:
+1. Kolkata Neighborhoods: Salt Lake Sector V & III, New Town, Park Street, Ballygunge, Gariahat, Alipore, Behala, Dum Dum, Lake Gardens, Kankurgachi, Kasba, Tollygunge, Howrah.
+2. Escrow Protection: Payments are held in secure escrow and disbursed only after job completion with customer OTP verification.
+3. Multi-Month Scheduling: High-demand pros are booked for September & October 2026, with November open. Instant 1-click alternative pros are available tomorrow.
+4. Support Hotline: support@localx.app | +91 98765 43210 (Salt Lake Sector V Operations Desk).
+`;
+
 const KNOWLEDGE_BASE = {
-  book: 'To book a service, browse our **Explore Professionals** directory or search directly by category (e.g. Electrician, AC Repair, Plumbing). Select an open date and time slot, enter your Kolkata address, and confirm! If your preferred specialist is fully booked for September or October, you can switch to an available partner specialist in 1 click.',
-  escrow: 'LocalX uses an **Escrow Protection System**. When you make a booking, your payment is held safely in escrow and is only released to the professional after you provide the 4-digit OTP upon successful job completion.',
-  register: 'You can sign up as a service specialist by visiting our **Register** page and selecting "Service Specialist". Upload your Aadhaar / Govt ID and skills certifications in the Pro Verification portal to get your **Verified Master** badge.',
-  busy: 'High-demand specialists are currently booked through September and October due to peak pre-festival rush. However, their calendar opens in **November 2026**, or you can immediately book an available partner specialist with open slots tomorrow!',
-  contact: 'You can reach the LocalX executive support team 24/7 via email at **support@localx.app** or direct helpline at **+91 98765 43210**. Kolkata Operations Hub is located in Salt Lake Sector V.',
-  pricing: 'Pricing on LocalX is 100% transparent. Consultations start at ₹249 for Electricians, ₹349 for Plumbers, and ₹549 for AC Jet Deep Cleaning. There are no hidden call-out fees.',
+  system: `Hello! I am the **LocalX AI Concierge**, your official assistant for Kolkata's Hyperlocal Service Network.\n\nI can help you:\n• Find & book verified local specialists near your neighborhood\n• Explain our Escrow Payment Protection with 4-digit OTP\n• Switch to available partner pros if someone is booked in Sept/Oct\n• Guide you through specialist onboarding & verification\n• Assist with support inquiries (support@localx.app | +91 98765 43210)`,
+  book: 'To book a service, visit our **Explore Directory** or search directly on the Home page (e.g. Electrician, AC Repair, Plumbing). Choose an available date and time slot, enter your Kolkata address, and confirm! If your favorite pro is booked through September/October, our 1-click Alternative Specialist switcher connects you with an open partner pro tomorrow!',
+  escrow: 'LocalX uses **Escrow Payment Protection**. When you schedule a service, your payment is held safely in escrow. It is only released to the professional once they finish the work and you verify their 4-digit OTP completion code. If you are ever unsatisfied, our admin team steps in to order a free rework or refund.',
+  register: 'To register as a service professional, visit our **Register** page and choose "Service Specialist". You can upload your Aadhaar / Govt ID and trade license in the Pro Verification portal to earn your **Verified Master** badge and start receiving neighborhood bookings.',
+  busy: 'Due to the peak pre-festival rush in Kolkata, senior specialists are booked through **September and October 2026**. Their calendars reopen in **November 2026**, or you can immediately book an available partner specialist who has open morning and afternoon slots tomorrow!',
+  locations: 'LocalX operates across **all major Kolkata zones** including Salt Lake (Sector V & III), New Town, Park Street, Ballygunge, Gariahat, Alipore, Behala, Dum Dum, Lake Gardens, Kankurgachi, Kasba, Tollygunge, and Howrah with live GPS dispatch.',
+  pricing: 'Pricing is transparent with zero hidden fees:\n• Electricians: Starts at ₹249\n• Plumbers: Starts at ₹299\n• AC Jet Foam Servicing: Starts at ₹549\n• Full Home Deep Cleaning: Starts at ₹1,299\n• Carpentry & Locks: Starts at ₹449\n• Painting & Waterproofing: Starts at ₹1,299',
+  contact: 'Our executive Kolkata support team is available 24/7:\n• **Email**: support@localx.app\n• **Helpline**: +91 98765 43210\n• **Operations Hub**: Salt Lake Sector V, Kolkata\n• **Admin Governance**: Monitored by Master Owner Koustav Mondal.',
 };
 
 export default function ContactSupportWidget() {
@@ -34,7 +49,7 @@ export default function ContactSupportWidget() {
     {
       id: 1,
       sender: 'ai',
-      text: 'Hello! I am your LocalX AI Support Concierge. How can I assist you with booking a specialist or managing your account today?',
+      text: 'Hello! I am your LocalX AI Support Concierge. How can I assist you with finding a Kolkata specialist, checking open slots, or managing your account today?',
       time: 'Just now',
     },
   ]);
@@ -50,18 +65,24 @@ export default function ContactSupportWidget() {
 
   const generateReply = (query) => {
     const q = query.toLowerCase();
-    if (q.includes('book') || q.includes('plumber') || q.includes('electrician') || q.includes('ac')) {
+    if (q.includes('system') || q.includes('who are you') || q.includes('what can you do') || q.includes('prompt')) {
+      return KNOWLEDGE_BASE.system;
+    } else if (q.includes('area') || q.includes('zone') || q.includes('kolkata') || q.includes('salt lake') || q.includes('where')) {
+      return KNOWLEDGE_BASE.locations;
+    } else if (q.includes('book') || q.includes('electrician') || q.includes('plumber') || q.includes('ac') || q.includes('clean') || q.includes('carpenter') || q.includes('paint') || q.includes('pest') || q.includes('cctv')) {
       return KNOWLEDGE_BASE.book;
-    } else if (q.includes('escrow') || q.includes('pay') || q.includes('money') || q.includes('refund')) {
+    } else if (q.includes('escrow') || q.includes('pay') || q.includes('money') || q.includes('refund') || q.includes('otp') || q.includes('safe')) {
       return KNOWLEDGE_BASE.escrow;
-    } else if (q.includes('register') || q.includes('partner') || q.includes('become') || q.includes('specialist')) {
+    } else if (q.includes('register') || q.includes('partner') || q.includes('become') || q.includes('pro') || q.includes('specialist')) {
       return KNOWLEDGE_BASE.register;
-    } else if (q.includes('busy') || q.includes('september') || q.includes('october') || q.includes('november') || q.includes('available')) {
+    } else if (q.includes('busy') || q.includes('september') || q.includes('october') || q.includes('november') || q.includes('slot') || q.includes('available')) {
       return KNOWLEDGE_BASE.busy;
-    } else if (q.includes('price') || q.includes('cost') || q.includes('charge') || q.includes('rate')) {
+    } else if (q.includes('price') || q.includes('cost') || q.includes('charge') || q.includes('rate') || q.includes('fee')) {
       return KNOWLEDGE_BASE.pricing;
+    } else if (q.includes('contact') || q.includes('help') || q.includes('phone') || q.includes('email') || q.includes('call') || q.includes('support')) {
+      return KNOWLEDGE_BASE.contact;
     } else {
-      return `Thank you for reaching out! Regarding "${query}": Our Kolkata support desk is actively monitoring all service requests. You can also contact our team directly at support@localx.app or call +91 98765 43210.`;
+      return `Thank you for asking! Regarding "${query}": As your LocalX AI Concierge, I am connected to all verified Kolkata specialists. You can explore categories from the navigation bar, or reach our direct operations desk at **support@localx.app** / **+91 98765 43210** anytime!`;
     }
   };
 

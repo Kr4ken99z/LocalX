@@ -347,14 +347,6 @@ export default function Navbar({ selectedCity = 'Kolkata', onSelectCity, onUseMy
                   <span>About LocalX</span>
                   <ArrowDown className="w-4 h-4 text-teal-400" />
                 </button>
-                <button
-                  type="button"
-                  onClick={() => navigateAndScroll('how-it-works')}
-                  className="w-full p-3 rounded-2xl bg-slate-900 hover:bg-slate-850 text-white font-semibold flex items-center justify-between border border-slate-800 transition text-left"
-                >
-                  <span>How it Works</span>
-                  <ArrowDown className="w-4 h-4 text-teal-400" />
-                </button>
               </div>
 
               {/* CONNECT */}
