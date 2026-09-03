@@ -7,7 +7,6 @@ import ErrorBoundary from './components/ErrorBoundary';
 // Components
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import QuickRoleBar from './components/QuickRoleBar';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -72,9 +71,6 @@ function MainLayout() {
 
       {/* Page Content Container */}
       <div className="page-content-wrapper flex flex-col min-h-screen">
-        {/* 3-Portal Sandbox Demo Bar */}
-        <QuickRoleBar />
-
         {/* Main Navbar */}
         <Navbar selectedCity={selectedCity} onSelectCity={setSelectedCity} />
 
