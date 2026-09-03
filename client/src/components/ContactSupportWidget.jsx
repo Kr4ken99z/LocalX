@@ -43,6 +43,57 @@ const KNOWLEDGE_BASE = {
   contact: 'Our executive Kolkata support team is available 24/7:\n• **Email**: support@localx.app\n• **Helpline**: +91 98765 43210\n• **Operations Hub**: Salt Lake Sector V, Kolkata\n• **Admin Governance**: Monitored by Master Owner Koustav Mondal.',
 };
 
+// Formatter for bold text and list formatting in chat
+const renderFormattedText = (text, isUser = false) => {
+  if (!text) return null;
+
+  const lines = text.split('\n');
+
+  return (
+    <div className="space-y-1.5">
+      {lines.map((line, lineIdx) => {
+        if (!line.trim()) return <div key={lineIdx} className="h-1" />;
+
+        const isBullet = line.trim().startsWith('•') || line.trim().startsWith('-');
+        const cleanLine = isBullet ? line.trim().replace(/^[•-]\s*/, '') : line;
+
+        // Split by **bold text**
+        const parts = cleanLine.split(/(\*\*[^*]+\*\*)/g);
+
+        const renderedLine = parts.map((part, partIdx) => {
+          if (part.startsWith('**') && part.endsWith('**')) {
+            const inner = part.slice(2, -2);
+            return (
+              <strong
+                key={partIdx}
+                className={isUser ? 'font-black text-black' : 'font-extrabold text-white tracking-wide'}
+              >
+                {inner}
+              </strong>
+            );
+          }
+          return <span key={partIdx}>{part}</span>;
+        });
+
+        if (isBullet) {
+          return (
+            <div key={lineIdx} className="flex items-start gap-1.5 pl-0.5 text-xs leading-relaxed">
+              <span className={isUser ? 'text-black font-bold' : 'text-teal-400 font-bold'}>•</span>
+              <div className="flex-1">{renderedLine}</div>
+            </div>
+          );
+        }
+
+        return (
+          <p key={lineIdx} className="leading-relaxed">
+            {renderedLine}
+          </p>
+        );
+      })}
+    </div>
+  );
+};
+
 export default function ContactSupportWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
@@ -189,13 +240,13 @@ export default function ContactSupportWidget() {
                 )}
 
                 <div
-                  className={`max-w-[82%] p-3 rounded-2xl text-xs leading-relaxed ${
+                  className={`max-w-[85%] p-3 rounded-2xl text-xs leading-relaxed ${
                     m.sender === 'user'
-                      ? 'bg-teal-500 text-slate-950 font-semibold rounded-tr-none'
+                      ? 'bg-teal-500 text-slate-950 font-semibold rounded-tr-none shadow-md'
                       : 'bg-[#101e35] text-slate-200 border border-slate-700/60 rounded-tl-none shadow-sm'
                   }`}
                 >
-                  <p className="whitespace-pre-line">{m.text}</p>
+                  {renderFormattedText(m.text, m.sender === 'user')}
                   <span
                     className={`block text-[9px] mt-1 text-right ${
                       m.sender === 'user' ? 'text-teal-950/70' : 'text-slate-400'
