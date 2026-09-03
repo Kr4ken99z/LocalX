@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
   X,
@@ -20,6 +20,14 @@ import { FALLBACK_PROS } from '../utils/mockData';
 export default function BookingModal({ professional, initialService = null, onClose, onSuccess }) {
   const navigate = useNavigate();
 
+  // Prevent background scrolling when modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
+
   // Active Specialist
   const [currentPro, setCurrentPro] = useState(professional);
 
@@ -38,7 +46,7 @@ export default function BookingModal({ professional, initialService = null, onCl
   // Dates Helper
   const today = new Date();
   const tomorrow = new Date(Date.now() + 86400000);
-  const nextMonth = new Date(Date.now() + 86400000 * 30);
+  const dayAfter = new Date(Date.now() + 86400000 * 2);
   const twoMonthsLater = new Date(Date.now() + 86400000 * 62); // 2+ months ahead
 
   const formatDateStr = (d) => {
@@ -61,7 +69,7 @@ export default function BookingModal({ professional, initialService = null, onCl
   const [error, setError] = useState('');
   const [confirmedBooking, setConfirmedBooking] = useState(null);
 
-  // Date Availability Logic (Demo professionals are 100% booked for near-term dates within 2 months)
+  // Date Availability Logic (Demo professionals are fully booked for near-term dates within 2 months)
   const isAdvanceDate = (dateStr) => {
     if (!dateStr) return false;
     const selected = new Date(dateStr);
@@ -91,7 +99,7 @@ export default function BookingModal({ professional, initialService = null, onCl
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
     if (!isDateOpen) {
-      setError('This date is completely booked. Please select an advance date (2+ months later) where slots are open.');
+      setError('This date is completely booked. Please choose an advance date (2+ months later on the calendar) where slots are open.');
       return;
     }
 
@@ -118,12 +126,12 @@ export default function BookingModal({ professional, initialService = null, onCl
       notes,
     };
 
+    let confirmedData = null;
+
     try {
       const res = await axios.post('/api/bookings', bookingPayload);
       if (res.data?.success && res.data.data) {
-        setConfirmedBooking(res.data.data);
-        if (onSuccess) onSuccess(res.data.data);
-        return;
+        confirmedData = res.data.data;
       }
     } catch (err) {
       // Gracefully handle unauthenticated/demo mode by creating local verified booking
@@ -131,47 +139,49 @@ export default function BookingModal({ professional, initialService = null, onCl
       setLoading(false);
     }
 
-    // Create confirmed demo booking object
-    const newDemoBooking = {
-      _id: 'bk_' + Date.now(),
-      bookingNumber: 'LX-' + Math.floor(1000 + Math.random() * 9000),
-      customer: {
-        name: 'You (Verified Customer)',
-        email: 'customer@localx.app',
-        phone: '+91 98301 23456',
-      },
-      professional: {
-        businessName: currentPro.businessName,
-        userId: currentPro.userId,
-      },
-      serviceName: selectedService.name,
-      category: currentPro.category,
-      scheduledDate,
-      scheduledTime,
-      status: 'CONFIRMED',
-      basePrice: selectedService.price || 299,
-      address: {
-        addressLine,
-        city,
-        landmark,
-      },
-      notes,
-      createdAt: new Date().toISOString(),
-    };
+    if (!confirmedData) {
+      // Create confirmed demo booking object
+      confirmedData = {
+        _id: 'bk_' + Date.now(),
+        bookingNumber: 'LX-' + Math.floor(1000 + Math.random() * 9000),
+        customer: {
+          name: 'You (Verified Customer)',
+          email: 'customer@localx.app',
+          phone: '+91 98301 23456',
+        },
+        professional: {
+          businessName: currentPro.businessName,
+          userId: currentPro.userId,
+        },
+        serviceName: selectedService.name,
+        category: currentPro.category,
+        scheduledDate,
+        scheduledTime,
+        status: 'CONFIRMED',
+        basePrice: selectedService.price || 299,
+        address: {
+          addressLine,
+          city,
+          landmark,
+        },
+        notes,
+        createdAt: new Date().toISOString(),
+      };
+    }
 
     // Save to localStorage for Customer and Admin dashboards
     try {
       const existing = JSON.parse(localStorage.getItem('localx_admin_bookings') || '[]');
-      localStorage.setItem('localx_admin_bookings', JSON.stringify([newDemoBooking, ...existing]));
+      localStorage.setItem('localx_admin_bookings', JSON.stringify([confirmedData, ...existing]));
     } catch (e) {}
 
-    if (onSuccess) onSuccess(newDemoBooking);
-    setConfirmedBooking(newDemoBooking);
+    if (onSuccess) onSuccess(confirmedData);
+    setConfirmedBooking(confirmedData);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
-      <div className="w-full max-w-lg p-6 bg-[#0b1322] border border-slate-700/80 rounded-3xl shadow-2xl relative my-8 text-xs">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/75 backdrop-blur-sm overflow-y-auto">
+      <div className="w-full max-w-lg p-5 sm:p-6 bg-[#0b1322] border border-slate-700/90 rounded-3xl shadow-2xl relative my-auto text-xs">
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -192,7 +202,7 @@ export default function BookingModal({ professional, initialService = null, onCl
               </span>
               <h3 className="text-xl font-black text-white">Booking #{confirmedBooking.bookingNumber} Confirmed!</h3>
               <p className="text-xs text-slate-300">
-                Your schedule slot with <strong>{currentPro.businessName}</strong> is reserved and locked in.
+                Your schedule slot with <strong>{currentPro.businessName}</strong> has been successfully booked.
               </p>
             </div>
 
@@ -315,98 +325,48 @@ export default function BookingModal({ professional, initialService = null, onCl
                     <span>2. Select Schedule Date</span>
                   </label>
                   {!isDateOpen && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setScheduledDate(formatDateStr(twoMonthsLater));
-                        setScheduledTime('10:00 AM - 12:00 PM');
-                        setError('');
-                      }}
-                      className="text-teal-400 hover:text-teal-300 text-[11px] font-bold flex items-center gap-1"
-                    >
-                      <span>Jump to 2 Months Ahead</span>
-                      <ArrowRight className="w-3 h-3" />
-                    </button>
+                    <span className="text-[10px] text-amber-300 font-semibold bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/30">
+                      Near-term dates fully booked
+                    </span>
                   )}
                 </div>
 
-                {/* Quick Date Presets */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mb-2.5">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setScheduledDate(formatDateStr(today));
-                      setScheduledTime('');
-                    }}
-                    className={`p-2 rounded-xl border text-center transition ${
-                      scheduledDate === formatDateStr(today)
-                        ? 'bg-rose-500/20 border-rose-500/50 text-white'
-                        : 'bg-slate-950/60 border-slate-800/80 text-slate-400 hover:border-slate-700'
-                    }`}
-                  >
-                    <span className="font-bold text-[11px] block">Today</span>
-                    <span className="text-[9px] font-bold text-rose-400">🔴 Fully Booked</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setScheduledDate(formatDateStr(tomorrow));
-                      setScheduledTime('');
-                    }}
-                    className={`p-2 rounded-xl border text-center transition ${
-                      scheduledDate === formatDateStr(tomorrow)
-                        ? 'bg-rose-500/20 border-rose-500/50 text-white'
-                        : 'bg-slate-950/60 border-slate-800/80 text-slate-400 hover:border-slate-700'
-                    }`}
-                  >
-                    <span className="font-bold text-[11px] block">Tomorrow</span>
-                    <span className="text-[9px] font-bold text-rose-400">🔴 Fully Booked</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setScheduledDate(formatDateStr(nextMonth));
-                      setScheduledTime('');
-                    }}
-                    className={`p-2 rounded-xl border text-center transition ${
-                      scheduledDate === formatDateStr(nextMonth)
-                        ? 'bg-rose-500/20 border-rose-500/50 text-white'
-                        : 'bg-slate-950/60 border-slate-800/80 text-slate-400 hover:border-slate-700'
-                    }`}
-                  >
-                    <span className="font-bold text-[11px] block">Next Month</span>
-                    <span className="text-[9px] font-bold text-rose-400">🔴 Fully Booked</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setScheduledDate(formatDateStr(twoMonthsLater));
-                      setScheduledTime('10:00 AM - 12:00 PM');
-                      setError('');
-                    }}
-                    className={`p-2 rounded-xl border text-center transition ${
-                      isDateOpen
-                        ? 'bg-teal-500/20 border-teal-400 text-white shadow-sm shadow-teal-500/20'
-                        : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
-                    }`}
-                  >
-                    <span className="font-bold text-[11px] block">2 Months Later</span>
-                    <span className="text-[9px] font-bold text-teal-400">🟢 Open Slots</span>
-                  </button>
+                {/* Quick 3-Day Presets: Today, Tomorrow, Day After */}
+                <div className="grid grid-cols-3 gap-2 mb-2.5">
+                  {[
+                    { date: formatDateStr(today), label: 'Today', booked: true },
+                    { date: formatDateStr(tomorrow), label: 'Tomorrow', booked: true },
+                    { date: formatDateStr(dayAfter), label: 'Day After', booked: true },
+                  ].map((d) => (
+                    <button
+                      key={d.date}
+                      type="button"
+                      onClick={() => {
+                        setScheduledDate(d.date);
+                        setScheduledTime('');
+                        setError('');
+                      }}
+                      className={`p-2 rounded-2xl border text-center transition ${
+                        scheduledDate === d.date
+                          ? 'bg-rose-500/20 border-rose-500/60 text-white'
+                          : 'bg-slate-950/70 border-slate-800 text-slate-400 hover:border-slate-700'
+                      }`}
+                    >
+                      <span className="font-bold text-[11px] block">{d.label}</span>
+                      <span className="text-[9px] font-bold text-rose-400 mt-0.5 block">🔴 Fully Booked</span>
+                    </button>
+                  ))}
                 </div>
 
-                {/* Manual Custom Date Input */}
-                <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+                {/* Manual Calendar Date Picker Platform */}
+                <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800/90 space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] text-slate-300 font-bold flex items-center gap-1.5">
+                    <span className="text-[11px] text-slate-200 font-bold flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5 text-teal-400" />
-                      Select Manual / Custom Date:
+                      Pick Any Custom Date on Calendar:
                     </span>
                     <span
-                      className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${
+                      className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${
                         isDateOpen
                           ? 'bg-teal-500/15 text-teal-300 border-teal-500/40'
                           : 'bg-rose-500/15 text-rose-300 border-rose-500/40'
@@ -416,6 +376,7 @@ export default function BookingModal({ professional, initialService = null, onCl
                     </span>
                   </div>
 
+                  {/* HTML5 Native Calendar Date Picker */}
                   <input
                     type="date"
                     value={scheduledDate}
@@ -429,24 +390,24 @@ export default function BookingModal({ professional, initialService = null, onCl
                         setScheduledTime('');
                       }
                     }}
-                    className="w-full px-3 py-2 text-xs rounded-xl bg-slate-900 border border-slate-700 text-white font-semibold focus:outline-none focus:border-teal-400 cursor-pointer"
+                    className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-900 border border-slate-700 text-white font-bold focus:outline-none focus:border-teal-400 cursor-pointer shadow-inner"
                   />
 
-                  {/* Dynamic Explanatory Banner */}
+                  {/* Informative Status Banner */}
                   {!isDateOpen ? (
                     <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-[11px] flex items-start gap-2">
                       <AlertTriangle className="w-4 h-4 shrink-0 text-rose-400 mt-0.5" />
                       <div>
-                        <strong className="block font-bold text-rose-200">Demo Specialist Currently 100% Booked</strong>
-                        Near-term dates (today, tomorrow & this month) are full. Pick an advance date <strong>2+ months later ({formatDateStr(twoMonthsLater)} onwards)</strong> to reserve an open slot.
+                        <strong className="block font-bold text-rose-200">Near-Term Schedule is 100% Reserved</strong>
+                        Demo specialist is fully booked for near-term dates. Pick an advance date on the calendar <strong>2+ months later ({formatDateStr(twoMonthsLater)} onwards)</strong> to reserve an open slot.
                       </div>
                     </div>
                   ) : (
                     <div className="p-2.5 rounded-xl bg-teal-500/10 border border-teal-500/30 text-teal-300 text-[11px] flex items-start gap-2">
                       <Check className="w-4 h-4 shrink-0 text-teal-400 mt-0.5" />
                       <div>
-                        <strong className="block font-bold text-teal-200">Advance Schedule Slots Open</strong>
-                        Date <strong>{scheduledDate}</strong> is open for advance booking! Select your preferred time slot below.
+                        <strong className="block font-bold text-teal-200">Advance Date Selected: {scheduledDate}</strong>
+                        Open schedule slots available for this date! Please choose an available time slot below.
                       </div>
                     </div>
                   )}

@@ -63,8 +63,9 @@ export default function ExplorePage({ selectedCity = 'Kolkata', onSelectCity }) 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
-  // Booking Modal
+  // Booking Modal & Success Toast
   const [activeBookingPro, setActiveBookingPro] = useState(null);
+  const [bookingSuccessToast, setBookingSuccessToast] = useState(null);
 
   const demoCities = [
     'All Cities',
@@ -704,12 +705,44 @@ export default function ExplorePage({ selectedCity = 'Kolkata', onSelectCity }) 
         )}
       </div>
 
+      {/* Floating Top Booking Success Toast */}
+      {bookingSuccessToast && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-lg px-4 transition-all duration-300">
+          <div className="p-4 rounded-2xl bg-emerald-950/95 border border-emerald-500/50 shadow-2xl shadow-emerald-900/50 backdrop-blur-xl flex items-center justify-between gap-3 text-white">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0 text-lg font-bold">
+                ✓
+              </div>
+              <div className="space-y-0.5">
+                <h4 className="font-extrabold text-xs text-emerald-300">
+                  🎉 Booking Confirmed: #{bookingSuccessToast.bookingNumber}
+                </h4>
+                <p className="text-[11px] text-slate-300">
+                  {bookingSuccessToast.serviceName} with <strong>{bookingSuccessToast.professional?.businessName}</strong> on{' '}
+                  <span className="text-emerald-300 font-bold">{bookingSuccessToast.scheduledDate}</span> ({bookingSuccessToast.scheduledTime})
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setBookingSuccessToast(null)}
+              className="p-1.5 rounded-lg hover:bg-emerald-900/50 text-slate-400 hover:text-white transition shrink-0 text-xs"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Booking Modal */}
       {activeBookingPro && (
         <BookingModal
           professional={activeBookingPro}
           onClose={() => setActiveBookingPro(null)}
-          onSuccess={() => setActiveBookingPro(null)}
+          onSuccess={(bookingData) => {
+            setActiveBookingPro(null);
+            setBookingSuccessToast(bookingData);
+            setTimeout(() => setBookingSuccessToast(null), 8000);
+          }}
         />
       )}
     </div>
