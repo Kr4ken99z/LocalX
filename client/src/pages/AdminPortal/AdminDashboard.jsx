@@ -764,74 +764,93 @@ export default function AdminDashboard() {
       {/* TAB 2: VERIFICATION QUEUE */}
       {activeTab === 'verifications' && (
         <div className="glass-panel p-6 rounded-3xl space-y-4">
-          <h2 className="text-base font-extrabold text-white flex items-center gap-2">
-            <Shield className="w-4 h-4 text-teal-400" />
-            <span>Professional Document Verification Queue</span>
-          </h2>
-          <p className="text-slate-400">Review submitted identity documents, certifications, and approve or reject.</p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h2 className="text-base font-extrabold text-white flex items-center gap-2">
+                <Shield className="w-4 h-4 text-teal-400" />
+                <span>Professional Document Verification Queue</span>
+              </h2>
+              <p className="text-slate-400 text-xs">
+                Review submitted identity documents, certifications, and approve or reject pending professionals.
+              </p>
+            </div>
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30 self-start sm:self-auto">
+              {pendingPros.length} Pending Review
+            </span>
+          </div>
 
           <div className="space-y-4">
-            {professionals.map((pro) => (
-              <div
-                key={pro._id}
-                className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
-              >
-                <div className="flex items-start gap-3">
-                  <img
-                    src={pro.userId?.avatar || 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=100&q=80'}
-                    alt="Pro"
-                    className="w-12 h-12 rounded-xl object-cover border border-slate-700 shrink-0"
-                  />
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-bold text-white text-sm">{pro.businessName}</h4>
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          pro.verificationStatus === 'VERIFIED'
-                            ? 'bg-teal-500/20 text-teal-300'
-                            : pro.verificationStatus === 'REJECTED'
-                            ? 'bg-rose-500/20 text-rose-300'
-                            : 'bg-amber-500/20 text-amber-300'
-                        }`}
-                      >
-                        {pro.verificationStatus}
-                      </span>
-                    </div>
-                    <p className="text-slate-400 text-[11px]">{pro.userId?.name} • {pro.userId?.email} • {pro.location?.address}</p>
-                    <div className="flex flex-wrap gap-2 pt-1">
-                      {pro.documents?.map((d, idx) => (
-                        <a
-                          key={idx}
-                          href={d.fileUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="px-2 py-0.5 bg-slate-900 hover:bg-slate-800 text-teal-400 rounded border border-slate-800 text-[10px]"
-                        >
-                          📎 {d.title} ({d.docType})
-                        </a>
-                      ))}
+            {pendingPros.length === 0 ? (
+              <div className="p-8 rounded-2xl bg-slate-950/60 border border-slate-800 text-center space-y-3">
+                <div className="w-12 h-12 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-400 flex items-center justify-center mx-auto text-lg">
+                  ✓
+                </div>
+                <h3 className="font-bold text-white text-sm">All Caught Up!</h3>
+                <p className="text-xs text-slate-400 max-w-md mx-auto">
+                  There are no pending professional verification requests in the queue. All registered professionals have already been verified.
+                </p>
+              </div>
+            ) : (
+              pendingPros.map((pro) => (
+                <div
+                  key={pro._id}
+                  className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+                >
+                  <div className="flex items-start gap-3">
+                    <img
+                      src={pro.userId?.avatar || 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=100&q=80'}
+                      alt="Pro"
+                      className="w-12 h-12 rounded-xl object-cover border border-slate-700 shrink-0"
+                    />
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-white text-sm">{pro.businessName}</h4>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                          PENDING AUDIT
+                        </span>
+                      </div>
+                      <p className="text-slate-400 text-[11px]">
+                        {pro.userId?.name} • {pro.userId?.email || `${pro.category}@localx.app`} • {pro.location?.address}
+                      </p>
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {pro.verificationDocs ? (
+                          pro.verificationDocs.map((doc, idx) => (
+                            <span
+                              key={idx}
+                              className="px-2.5 py-1 bg-slate-900 text-teal-300 rounded-lg border border-slate-800 text-[10px] flex items-center gap-1.5"
+                            >
+                              <span>📄</span>
+                              <strong>{doc.type}:</strong> {doc.docNumber}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="px-2.5 py-1 bg-slate-900 text-teal-300 rounded-lg border border-slate-800 text-[10px]">
+                            📄 Government ID & Trade Certificate Submitted
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-2 self-end md:self-center shrink-0">
-                  <button
-                    onClick={() => handleVerifyPro(pro._id, 'VERIFIED')}
-                    className="px-3 py-1.5 rounded-xl bg-teal-400 hover:bg-teal-300 text-slate-950 font-bold flex items-center gap-1 transition"
-                  >
-                    <Check className="w-3.5 h-3.5" />
-                    <span>Approve</span>
-                  </button>
-                  <button
-                    onClick={() => handleVerifyPro(pro._id, 'REJECTED')}
-                    className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-rose-500/20 text-rose-400 border border-slate-800 font-semibold flex items-center gap-1 transition"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                    <span>Reject</span>
-                  </button>
+                  <div className="flex items-center gap-2 self-end md:self-center shrink-0">
+                    <button
+                      onClick={() => handleVerifyPro(pro._id, 'VERIFIED')}
+                      className="px-3.5 py-1.5 rounded-xl bg-teal-400 hover:bg-teal-300 text-slate-950 font-bold flex items-center gap-1 transition shadow"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Approve</span>
+                    </button>
+                    <button
+                      onClick={() => handleVerifyPro(pro._id, 'REJECTED')}
+                      className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-rose-500/20 text-rose-400 border border-slate-800 font-semibold flex items-center gap-1 transition"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                      <span>Reject</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       )}
