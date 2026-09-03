@@ -181,6 +181,13 @@ export default function ExplorePage({ selectedCity = 'Kolkata', onSelectCity }) 
     }
   };
 
+  // Calculate Pagination
+  const totalPages = Math.max(1, Math.ceil(professionals.length / itemsPerPage));
+  const paginatedPros = professionals.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Explore Hero Banner (Matching User's Boat & Beacon Metaphor) */}
