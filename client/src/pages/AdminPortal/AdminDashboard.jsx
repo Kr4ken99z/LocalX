@@ -103,20 +103,71 @@ const INITIAL_DEMO_USERS = [
 ];
 
 const INITIAL_DEMO_BOOKINGS = [
+  // CONFIRMED (Scheduled Appointments)
   {
-    _id: 'bk_1',
-    bookingNumber: 'LX-9401',
+    _id: 'bk_demo_1',
+    bookingNumber: 'LX-3926',
     customer: { name: 'Rohan Sen', email: 'customer@localx.app', phone: '+91 98301 23456' },
-    professional: { businessName: 'Apex Electricals & Power Systems' },
-    serviceName: 'Electrical Diagnostics & Wiring Fault Rectification',
+    professional: { businessName: 'VoltMaster Quick Response' },
+    serviceName: 'Electrician Diagnostics & Standard Service',
     category: 'electrician',
-    scheduledDate: '2026-09-02',
+    scheduledDate: '2026-11-04',
     scheduledTime: '10:00 AM - 12:00 PM',
-    status: 'COMPLETED',
+    status: 'CONFIRMED',
     basePrice: 299,
+    price: 299,
+    address: { addressLine: '#402, Sunshine Heights, 12th Main', city: 'Kolkata' },
+    createdAt: '2026-09-03T10:00:00.000Z',
   },
   {
-    _id: 'bk_2',
+    _id: 'bk_demo_2',
+    bookingNumber: 'LX-8777',
+    customer: { name: 'Rohan Sen', email: 'customer@localx.app', phone: '+91 98301 23456' },
+    professional: { businessName: 'Apex Electricals & Power Systems' },
+    serviceName: 'Electrician Diagnostics & Standard Service',
+    category: 'electrician',
+    scheduledDate: '2026-11-12',
+    scheduledTime: '10:00 AM - 12:00 PM',
+    status: 'CONFIRMED',
+    basePrice: 299,
+    price: 299,
+    address: { addressLine: '#402, Sunshine Heights, 12th Main', city: 'Kolkata' },
+    createdAt: '2026-09-03T11:15:00.000Z',
+  },
+  {
+    _id: 'bk_demo_3',
+    bookingNumber: 'LX-9403',
+    customer: { name: 'Pooja Agarwal', email: 'pooja.a@example.com', phone: '+91 98302 99881' },
+    professional: { businessName: 'HydroFix Emergency Rapid Plumbers' },
+    serviceName: 'Emergency Tap & Sink Leak Rectification',
+    category: 'plumber',
+    scheduledDate: '2026-11-18',
+    scheduledTime: '08:00 AM - 10:00 AM',
+    status: 'CONFIRMED',
+    basePrice: 299,
+    price: 299,
+    address: { addressLine: 'Flat 3B, Silver Oak, Salt Lake Sector 2', city: 'Kolkata' },
+    createdAt: '2026-09-02T15:30:00.000Z',
+  },
+  {
+    _id: 'bk_demo_4',
+    bookingNumber: 'LX-6812',
+    customer: { name: 'Abhishek Chatterjee', email: 'abhishek.c@example.com', phone: '+91 98311 44556' },
+    professional: { businessName: 'Kolkata Urban Pest Defense' },
+    serviceName: 'Odorless Anti-Termite & Cockroach Gel Shield',
+    category: 'pest-control',
+    scheduledDate: '2026-11-25',
+    scheduledTime: '11:00 AM - 01:00 PM',
+    status: 'CONFIRMED',
+    basePrice: 899,
+    price: 899,
+    address: { addressLine: '14/2B Rashbehari Avenue, Ballygunge', city: 'Kolkata' },
+    createdAt: '2026-09-01T09:00:00.000Z',
+  },
+
+  // IN PROGRESS (Active On-Site Dispatches)
+  {
+    _id: 'bk_demo_5',
     bookingNumber: 'LX-9402',
     customer: { name: 'Ananya Roy', email: 'ananya.roy@example.com', phone: '+91 98309 87654' },
     professional: { businessName: 'Metro Air Conditioning & Cooling' },
@@ -126,30 +177,90 @@ const INITIAL_DEMO_BOOKINGS = [
     scheduledTime: '01:00 PM - 03:00 PM',
     status: 'IN_PROGRESS',
     basePrice: 549,
+    price: 549,
+    address: { addressLine: 'Block C, Lake Town', city: 'Kolkata' },
+    createdAt: '2026-09-03T12:00:00.000Z',
   },
   {
-    _id: 'bk_3',
-    bookingNumber: 'LX-9403',
+    _id: 'bk_demo_6',
+    bookingNumber: 'LX-4109',
+    customer: { name: 'Suman Banerjee', email: 'suman.b@example.com', phone: '+91 98305 77665' },
+    professional: { businessName: 'ProFinish Carpentry & Woodcraft' },
+    serviceName: 'Custom Modular Wardrobe Hinge Realignment',
+    category: 'carpentry',
+    scheduledDate: '2026-09-03',
+    scheduledTime: '03:00 PM - 05:00 PM',
+    status: 'IN_PROGRESS',
+    basePrice: 449,
+    price: 449,
+    address: { addressLine: 'Plot 45, Action Area 1, New Town', city: 'Kolkata' },
+    createdAt: '2026-09-03T13:45:00.000Z',
+  },
+
+  // COMPLETED (Verified Services)
+  {
+    _id: 'bk_demo_7',
+    bookingNumber: 'LX-9401',
     customer: { name: 'Rohan Sen', email: 'customer@localx.app', phone: '+91 98301 23456' },
-    professional: { businessName: 'HydroFix Emergency Rapid Plumbers' },
-    serviceName: 'Emergency Tap & Sink Leak Rectification',
-    category: 'plumber',
-    scheduledDate: '2026-09-04',
-    scheduledTime: '08:00 AM - 10:00 AM',
-    status: 'CONFIRMED',
+    professional: { businessName: 'Apex Electricals & Power Systems' },
+    serviceName: 'Electrical Diagnostics & Wiring Fault Rectification',
+    category: 'electrician',
+    scheduledDate: '2026-09-02',
+    scheduledTime: '10:00 AM - 12:00 PM',
+    status: 'COMPLETED',
     basePrice: 299,
+    price: 299,
+    address: { addressLine: '#402, Sunshine Heights, 12th Main', city: 'Kolkata' },
+    createdAt: '2026-09-02T08:00:00.000Z',
   },
   {
-    _id: 'bk_4',
-    bookingNumber: 'LX-9404',
-    customer: { name: 'Debjit Mukherjee', email: 'debjit.m@example.com', phone: '+91 98315 55443' },
+    _id: 'bk_demo_8',
+    bookingNumber: 'LX-8120',
+    customer: { name: 'Dr. Debabrata Sen', email: 'dr.sen@example.com', phone: '+91 98319 22334' },
     professional: { businessName: 'PureSpark Deep Cleaning & Sanitization' },
-    serviceName: 'Complete 2BHK Intensive Deep Sanitization',
+    serviceName: 'Full 3BHK Intensive Deep Kitchen & Bathroom Sanitization',
     category: 'cleaning',
-    scheduledDate: '2026-11-02',
+    scheduledDate: '2026-09-01',
     scheduledTime: '09:00 AM - 01:00 PM',
-    status: 'PENDING',
-    basePrice: 2199,
+    status: 'COMPLETED',
+    basePrice: 1899,
+    price: 1899,
+    address: { addressLine: '77 Southern Avenue, Keyatala', city: 'Kolkata' },
+    createdAt: '2026-09-01T07:30:00.000Z',
+  },
+
+  // CANCELLED (Refunded with clear reasons)
+  {
+    _id: 'bk_demo_9',
+    bookingNumber: 'LX-6204',
+    customer: { name: 'Vikramaditya Roy', email: 'vikram.roy@example.com', phone: '+91 98300 11223' },
+    professional: { businessName: 'Metro Air Conditioning & Cooling' },
+    serviceName: 'AC Gas Leak Detection & Precision Refill',
+    category: 'ac-repair',
+    scheduledDate: '2026-08-30',
+    scheduledTime: '04:00 PM - 06:00 PM',
+    status: 'CANCELLED',
+    cancellationReason: 'Change of plans / Schedule conflict - Customer traveling for work.',
+    basePrice: 1299,
+    price: 1299,
+    address: { addressLine: 'Flat 1A, Diamond City West, Behala', city: 'Kolkata' },
+    createdAt: '2026-08-30T10:00:00.000Z',
+  },
+  {
+    _id: 'bk_demo_10',
+    bookingNumber: 'LX-3188',
+    customer: { name: 'Kalyan Chakraborty', email: 'kalyan.c@example.com', phone: '+91 98322 66778' },
+    professional: { businessName: 'Master Paintcraft Solutions' },
+    serviceName: 'Exterior Waterproof Primer Coat Application',
+    category: 'painting',
+    scheduledDate: '2026-08-28',
+    scheduledTime: '10:00 AM - 02:00 PM',
+    status: 'CANCELLED',
+    cancellationReason: 'Monsoon heavy rain delay - Customer requested full advance refund.',
+    basePrice: 3499,
+    price: 3499,
+    address: { addressLine: '52 Gariahat Road, Dover Terrace', city: 'Kolkata' },
+    createdAt: '2026-08-28T09:00:00.000Z',
   },
 ];
 
@@ -248,7 +359,14 @@ export default function AdminDashboard() {
   const [bookingsList, setBookingsList] = useState(() => {
     try {
       const saved = localStorage.getItem('localx_admin_bookings');
-      return saved ? JSON.parse(saved) : INITIAL_DEMO_BOOKINGS;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length >= 4) {
+          return parsed;
+        }
+      }
+      localStorage.setItem('localx_admin_bookings', JSON.stringify(INITIAL_DEMO_BOOKINGS));
+      return INITIAL_DEMO_BOOKINGS;
     } catch {
       return INITIAL_DEMO_BOOKINGS;
     }
