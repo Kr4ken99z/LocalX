@@ -18,6 +18,7 @@ import {
 import { detectSmartLocation } from '../utils/locationHelper';
 import TrustScoreBadge from '../components/TrustScoreBadge';
 import LeafletMap from '../components/LeafletMap';
+import GoogleMapView from '../components/GoogleMapView';
 import BookingModal from '../components/BookingModal';
 import { FALLBACK_CATEGORIES, FALLBACK_PROS } from '../utils/mockData';
 
@@ -48,6 +49,7 @@ export default function ExplorePage({ selectedCity = 'Kolkata', onSelectCity }) 
   const [viewMode, setViewMode] = useState('both'); // 'both', 'grid', 'map'
   const [mapCenter, setMapCenter] = useState(cityCoordinatesMap[initialCity] || [22.5726, 88.3639]);
   const [isLocating, setIsLocating] = useState(false);
+  const [mapEngine, setMapEngine] = useState('google'); // 'google' | 'osm'
 
   // Booking Modal
   const [activeBookingPro, setActiveBookingPro] = useState(null);
@@ -134,8 +136,8 @@ export default function ExplorePage({ selectedCity = 'Kolkata', onSelectCity }) 
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      {/* Explore Hero Banner (Matching Image 3) */}
-      <div className="relative rounded-3xl overflow-hidden border border-slate-700/60 bg-[#0c1424]/90 p-8 sm:p-12 shadow-2xl backdrop-blur-xl">
+      {/* Explore Hero Banner (Matching User's Boat & Beacon Metaphor) */}
+      <div className="relative rounded-3xl overflow-hidden border border-slate-700/60 bg-[#0c1424]/90 p-6 sm:p-10 shadow-2xl backdrop-blur-xl">
         {/* Ambient ray light glow */}
         <div
           className="absolute inset-0 pointer-events-none opacity-60"
@@ -152,25 +154,43 @@ export default function ExplorePage({ selectedCity = 'Kolkata', onSelectCity }) 
           }}
         />
 
-        <div className="relative z-10 max-w-3xl space-y-4">
-          <span className="text-[11px] font-bold text-amber-300 tracking-[0.25em] uppercase block">
-            YOU HAVE ARRIVED · LOCALX IS HERE
-          </span>
-          <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-[1.15]">
-            Somewhere unknown?<br />
-            <span className="text-teal-400">Start with LocalX.</span>
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
-            When every street feels unfamiliar, LocalX becomes your local signal. Find verified professionals nearby and get the help you need to feel at home again.
-          </p>
-          <div className="flex flex-wrap items-center gap-4 pt-2">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-950/80 border border-teal-500/50 text-teal-300 text-xs font-bold shadow-inner">
-              <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>
-              YOUR LOCAL SIGNAL IS ACTIVE
-            </div>
-            <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 tracking-wider uppercase">
-              SCROLL TO DISCOVER TRUSTED HELP
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          <div className="lg:col-span-7 space-y-4">
+            <span className="text-[11px] font-bold text-amber-300 tracking-[0.25em] uppercase block">
+              YOU HAVE ARRIVED · LOCALX IS HERE
             </span>
+            <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-[1.15]">
+              Somewhere unknown?<br />
+              <span className="text-teal-400">Start with LocalX.</span>
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
+              When every street feels unfamiliar, LocalX becomes your local signal. Like a lone boat navigating dark waters guided by a beacon of light, LocalX connects you to verified specialists so you never feel lost.
+            </p>
+            <div className="flex flex-wrap items-center gap-4 pt-2">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-950/80 border border-teal-500/50 text-teal-300 text-xs font-bold shadow-inner">
+                <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>
+                YOUR LOCAL SIGNAL IS ACTIVE
+              </div>
+              <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 tracking-wider uppercase">
+                SCROLL TO DISCOVER TRUSTED HELP
+              </span>
+            </div>
+          </div>
+
+          {/* Boat & Beacon Visual */}
+          <div className="lg:col-span-5 relative">
+            <div className="relative rounded-2xl overflow-hidden border border-amber-500/30 shadow-2xl group bg-slate-950">
+              <img
+                src="/localx-boat.png"
+                alt="Solitary boat illuminated by LocalX golden beacon in unknown waters"
+                className="w-full h-48 sm:h-56 object-cover object-center group-hover:scale-105 transition-transform duration-700"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0c1424] via-transparent to-transparent opacity-80" />
+              <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-[11px] text-amber-200/90 font-medium bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-xl border border-amber-500/20">
+                <span className="font-semibold">🧭 In Unknown Waters · Guided by LocalX</span>
+                <span className="text-teal-300 font-bold">{professionals.length} Pros</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -353,15 +373,54 @@ export default function ExplorePage({ selectedCity = 'Kolkata', onSelectCity }) 
           <div className={viewMode === 'both' ? 'lg:col-span-5 order-2 lg:order-1' : 'w-full'}>
             <div className="sticky top-28 space-y-2">
               <div className="flex items-center justify-between text-xs text-slate-400 px-1">
-                <span>Interactive Map ({city === 'all' ? 'All India' : city})</span>
-                <span className="text-teal-400 font-semibold">{professionals.length} specialists</span>
+                <span className="font-semibold text-slate-300">
+                  {mapEngine === 'google' ? 'Google Maps Live' : 'OpenStreetMap'}{' '}
+                  <span className="text-slate-500 font-normal">({city === 'all' ? 'All India' : city})</span>
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-teal-400 font-bold">{professionals.length} specialists</span>
+                  <div className="flex items-center rounded-lg bg-slate-950 border border-slate-800 p-0.5 text-[10px]">
+                    <button
+                      type="button"
+                      onClick={() => setMapEngine('google')}
+                      className={`px-2 py-0.5 rounded font-bold transition ${
+                        mapEngine === 'google'
+                          ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      Google
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMapEngine('osm')}
+                      className={`px-2 py-0.5 rounded font-bold transition ${
+                        mapEngine === 'osm'
+                          ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      OSM
+                    </button>
+                  </div>
+                </div>
               </div>
-              <LeafletMap
-                professionals={professionals}
-                center={mapCenter}
-                zoom={12}
-                height={viewMode === 'map' ? '650px' : '550px'}
-              />
+
+              {mapEngine === 'google' ? (
+                <GoogleMapView
+                  professionals={professionals}
+                  center={mapCenter}
+                  zoom={12}
+                  height={viewMode === 'map' ? '650px' : '550px'}
+                />
+              ) : (
+                <LeafletMap
+                  professionals={professionals}
+                  center={mapCenter}
+                  zoom={12}
+                  height={viewMode === 'map' ? '650px' : '550px'}
+                />
+              )}
             </div>
           </div>
         )}
