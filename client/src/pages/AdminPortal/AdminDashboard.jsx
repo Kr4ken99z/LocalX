@@ -321,6 +321,16 @@ export default function AdminDashboard() {
   const [bookingStatusFilter, setBookingStatusFilter] = useState('all');
   const [selectedBookingForInspect, setSelectedBookingForInspect] = useState(null);
 
+  // Admin Delay/Reschedule Modal State
+  const [selectedBookingForDelay, setSelectedBookingForDelay] = useState(null);
+  const [delayNewDate, setDelayNewDate] = useState('');
+  const [delayNewTime, setDelayNewTime] = useState('');
+  const [delayReasonText, setDelayReasonText] = useState('Heavy traffic / transit delay');
+
+  // Admin Cancel Modal State
+  const [selectedBookingForAdminCancel, setSelectedBookingForAdminCancel] = useState(null);
+  const [adminCancelReason, setAdminCancelReason] = useState('Customer requested cancellation and refund');
+
   useEffect(() => {
     setBookingPage(1);
   }, [bookingSearch, bookingStatusFilter]);
@@ -349,17 +359,50 @@ export default function AdminDashboard() {
     setTimeout(() => setActionSuccess(''), 3000);
   };
 
-  const handleCancelBookingByAdmin = (bookingId) => {
-    if (!window.confirm('Are you sure you want to cancel this booking and mark it as refunded?')) return;
+  const handleConfirmDelayByAdmin = (e) => {
+    e.preventDefault();
+    if (!selectedBookingForDelay) return;
+    const bookingId = selectedBookingForDelay._id;
     const updated = bookingsList.map((b) =>
-      b._id === bookingId ? { ...b, status: 'CANCELLED', cancelledBy: 'Platform Admin' } : b
+      b._id === bookingId
+        ? {
+            ...b,
+            scheduledDate: delayNewDate || b.scheduledDate,
+            scheduledTime: delayNewTime || b.scheduledTime,
+            delayReason: delayReasonText,
+          }
+        : b
     );
     setBookingsList(updated);
     localStorage.setItem('localx_admin_bookings', JSON.stringify(updated));
     localStorage.setItem('localx_customer_bookings', JSON.stringify(updated));
     window.dispatchEvent(new Event('storage'));
-    setActionSuccess('Booking cancelled and marked for refund.');
-    setTimeout(() => setActionSuccess(''), 3000);
+    setSelectedBookingForDelay(null);
+    setActionSuccess(`Booking #${selectedBookingForDelay.bookingNumber} delayed/rescheduled with notice.`);
+    setTimeout(() => setActionSuccess(''), 4000);
+  };
+
+  const handleConfirmCancelByAdmin = (e) => {
+    e.preventDefault();
+    if (!selectedBookingForAdminCancel) return;
+    const bookingId = selectedBookingForAdminCancel._id;
+    const updated = bookingsList.map((b) =>
+      b._id === bookingId
+        ? {
+            ...b,
+            status: 'CANCELLED',
+            cancelledBy: 'Platform Admin',
+            cancellationReason: adminCancelReason,
+          }
+        : b
+    );
+    setBookingsList(updated);
+    localStorage.setItem('localx_admin_bookings', JSON.stringify(updated));
+    localStorage.setItem('localx_customer_bookings', JSON.stringify(updated));
+    window.dispatchEvent(new Event('storage'));
+    setSelectedBookingForAdminCancel(null);
+    setActionSuccess(`Booking #${selectedBookingForAdminCancel.bookingNumber} cancelled and refund marked.`);
+    setTimeout(() => setActionSuccess(''), 4000);
   };
 
   const handleDeleteBookingByAdmin = (bookingId) => {
@@ -1614,11 +1657,33 @@ export default function AdminDashboard() {
                             <span>Inspect</span>
                           </button>
 
+                          {/* Admin Delay / Reschedule Button */}
+                          {b.status !== 'CANCELLED' && b.status !== 'COMPLETED' && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedBookingForDelay(b);
+                                setDelayNewDate(b.scheduledDate || '');
+                                setDelayNewTime(b.scheduledTime || '01:00 PM - 03:00 PM');
+                                setDelayReasonText('Heavy rain / waterlogging in transit');
+                              }}
+                              title="Delay or Reschedule Appointment"
+                              className="px-2 py-1 rounded-lg text-[11px] font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 transition inline-flex items-center gap-1"
+                            >
+                              <Clock className="w-3.5 h-3.5 text-amber-400" />
+                              <span>Delay</span>
+                            </button>
+                          )}
+
+                          {/* Admin Cancel with Reason Button */}
                           {b.status !== 'CANCELLED' && (
                             <button
                               type="button"
-                              onClick={() => handleCancelBookingByAdmin(b._id)}
-                              title="Cancel Booking and Issue Refund"
+                              onClick={() => {
+                                setSelectedBookingForAdminCancel(b);
+                                setAdminCancelReason('Customer requested cancellation and refund');
+                              }}
+                              title="Cancel Booking and Issue Refund with Reason"
                               className="px-2 py-1 rounded-lg text-[11px] font-semibold bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition inline-flex items-center"
                             >
                               Cancel/Refund
@@ -1704,6 +1769,144 @@ export default function AdminDashboard() {
                   <span>Next</span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* Admin Delay / Reschedule Modal */}
+          {selectedBookingForDelay && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+              <div className="w-full max-w-md p-6 bg-[#0b1322] border border-slate-700/80 rounded-3xl shadow-2xl relative space-y-4 text-xs">
+                <button
+                  onClick={() => setSelectedBookingForDelay(null)}
+                  className="absolute top-4 right-4 p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"
+                >
+                  ✕
+                </button>
+
+                <div className="space-y-1">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-300 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/30">
+                    Admin Schedule Control
+                  </span>
+                  <h3 className="text-base font-extrabold text-white">
+                    Delay / Reschedule Booking #{selectedBookingForDelay.bookingNumber}
+                  </h3>
+                  <p className="text-slate-400 text-xs">
+                    Update the scheduled appointment time and broadcast a delay notice to customer and pro.
+                  </p>
+                </div>
+
+                <form onSubmit={handleConfirmDelayByAdmin} className="space-y-3 pt-1">
+                  <div>
+                    <label className="block text-slate-300 font-bold mb-1">New Scheduled Date:</label>
+                    <input
+                      type="date"
+                      required
+                      value={delayNewDate}
+                      onChange={(e) => setDelayNewDate(e.target.value)}
+                      className="w-full px-3 py-2 text-xs rounded-xl bg-slate-950 border border-slate-700 text-white font-bold focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-300 font-bold mb-1">New Time Slot:</label>
+                    <select
+                      value={delayNewTime}
+                      onChange={(e) => setDelayNewTime(e.target.value)}
+                      className="w-full px-3 py-2 text-xs rounded-xl bg-slate-950 border border-slate-700 text-white font-bold focus:outline-none focus:border-amber-400 cursor-pointer"
+                    >
+                      <option value="08:00 AM - 10:00 AM">08:00 AM - 10:00 AM</option>
+                      <option value="10:00 AM - 12:00 PM">10:00 AM - 12:00 PM</option>
+                      <option value="01:00 PM - 03:00 PM">01:00 PM - 03:00 PM</option>
+                      <option value="03:00 PM - 05:00 PM">03:00 PM - 05:00 PM</option>
+                      <option value="05:00 PM - 07:00 PM">05:00 PM - 07:00 PM</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-300 font-bold mb-1">Reason for Delay / Notice:</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Heavy rain / waterlogging delay, Prior job extended"
+                      value={delayReasonText}
+                      onChange={(e) => setDelayReasonText(e.target.value)}
+                      className="w-full px-3 py-2 text-xs rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedBookingForDelay(null)}
+                      className="flex-1 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-semibold border border-slate-700 transition"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold transition shadow-lg shadow-amber-500/25"
+                    >
+                      Save Delay & Notify
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Admin Cancel with Reason Modal */}
+          {selectedBookingForAdminCancel && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+              <div className="w-full max-w-md p-6 bg-[#0b1322] border border-slate-700/80 rounded-3xl shadow-2xl relative space-y-4 text-xs">
+                <button
+                  onClick={() => setSelectedBookingForAdminCancel(null)}
+                  className="absolute top-4 right-4 p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"
+                >
+                  ✕
+                </button>
+
+                <div className="space-y-1">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-rose-400 bg-rose-500/10 px-2.5 py-0.5 rounded-full border border-rose-500/30">
+                    Administrative Cancellation
+                  </span>
+                  <h3 className="text-base font-extrabold text-white">
+                    Cancel Booking #{selectedBookingForAdminCancel.bookingNumber}
+                  </h3>
+                  <p className="text-slate-400 text-xs">
+                    Please provide an official administrative reason for cancelling and refunding this booking.
+                  </p>
+                </div>
+
+                <form onSubmit={handleConfirmCancelByAdmin} className="space-y-3 pt-1">
+                  <div>
+                    <label className="block text-slate-300 font-bold mb-1">Cancellation Reason:</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Customer refund requested, Duplicate request, Specialist unavailable"
+                      value={adminCancelReason}
+                      onChange={(e) => setAdminCancelReason(e.target.value)}
+                      className="w-full px-3 py-2 text-xs rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-rose-400"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedBookingForAdminCancel(null)}
+                      className="flex-1 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-semibold border border-slate-700 transition"
+                    >
+                      Keep Booking
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold transition shadow-lg shadow-rose-500/25"
+                    >
+                      Confirm Cancellation
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
           )}

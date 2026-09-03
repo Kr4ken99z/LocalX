@@ -13,7 +13,9 @@ import {
   Truck,
   Wrench,
   AlertCircle,
+  AlertTriangle,
   ArrowRight,
+  X,
 } from 'lucide-react';
 import ReviewModal from '../../components/ReviewModal';
 import DisputeModal from '../../components/DisputeModal';
@@ -26,6 +28,13 @@ export default function CustomerDashboard() {
   const [activeTab, setActiveTab] = useState('active'); // 'active', 'completed', 'all'
   const [reviewBooking, setReviewBooking] = useState(null);
   const [disputeBooking, setDisputeBooking] = useState(null);
+
+  // Cancel Booking with Reason State
+  const [selectedBookingForCancel, setSelectedBookingForCancel] = useState(null);
+  const [cancelPresetReason, setCancelPresetReason] = useState('Change of plans / Schedule conflict');
+  const [cancelCustomNotes, setCancelCustomNotes] = useState('');
+  const [cancelSuccessMsg, setCancelSuccessMsg] = useState('');
+
   const { user } = useAuth();
   const { socket } = useSocket();
   const navigate = useNavigate();
@@ -80,23 +89,48 @@ export default function CustomerDashboard() {
     };
   }, [socket]);
 
-  const handleCancelBooking = async (bookingId) => {
-    if (!window.confirm('Are you sure you want to cancel this booking request?')) return;
+  const confirmCancelWithReason = async (e) => {
+    e.preventDefault();
+    if (!selectedBookingForCancel) return;
+
+    const finalReason =
+      cancelPresetReason === 'Other reason'
+        ? cancelCustomNotes || 'Other reason'
+        : `${cancelPresetReason}${cancelCustomNotes ? ` (${cancelCustomNotes})` : ''}`;
+
+    const bookingId = selectedBookingForCancel._id;
+
     try {
       await axios.patch(`/api/bookings/${bookingId}/status`, {
         status: 'CANCELLED',
-        comment: 'Cancelled by customer',
+        comment: finalReason,
       });
-      fetchBookings();
-    } catch (err) {
-      // Also update local storage if it was a demo booking
-      try {
-        const local = JSON.parse(localStorage.getItem('localx_customer_bookings') || '[]');
-        const updated = local.map((b) => (b._id === bookingId ? { ...b, status: 'CANCELLED' } : b));
-        localStorage.setItem('localx_customer_bookings', JSON.stringify(updated));
-        fetchBookings();
-      } catch (e) {}
-    }
+    } catch (err) {}
+
+    // Update local storage
+    try {
+      const local = JSON.parse(localStorage.getItem('localx_customer_bookings') || '[]');
+      const updated = local.map((b) =>
+        b._id === bookingId ? { ...b, status: 'CANCELLED', cancellationReason: finalReason } : b
+      );
+      localStorage.setItem('localx_customer_bookings', JSON.stringify(updated));
+
+      const adminBookings = JSON.parse(localStorage.getItem('localx_admin_bookings') || '[]');
+      const updatedAdmin = adminBookings.map((b) =>
+        b._id === bookingId ? { ...b, status: 'CANCELLED', cancellationReason: finalReason } : b
+      );
+      localStorage.setItem('localx_admin_bookings', JSON.stringify(updatedAdmin));
+
+      window.dispatchEvent(new Event('storage'));
+    } catch (e) {}
+
+    fetchBookings();
+    setSelectedBookingForCancel(null);
+    setCancelCustomNotes('');
+    setCancelSuccessMsg(
+      `Booking #${selectedBookingForCancel.bookingNumber} has been successfully cancelled and refund initiated.`
+    );
+    setTimeout(() => setCancelSuccessMsg(''), 6000);
   };
 
   const activeStatuses = ['PENDING', 'ACCEPTED', 'ON_THE_WAY', 'IN_PROGRESS', 'CONFIRMED'];
@@ -128,7 +162,9 @@ export default function CustomerDashboard() {
       );
     }
 
-    const currentIndex = steps.findIndex((s) => s.key === currentStatus);
+    const currentIndex = steps.findIndex(
+      (s) => s.key === currentStatus || (currentStatus === 'CONFIRMED' && s.key === 'ACCEPTED')
+    );
 
     return (
       <div className="pt-3 pb-1">
@@ -150,7 +186,11 @@ export default function CustomerDashboard() {
                 >
                   {isDone ? '✓' : idx + 1}
                 </div>
-                <span className={`text-[10px] mt-1 font-medium ${isCurrent ? 'text-teal-400 font-bold' : isDone ? 'text-slate-300' : 'text-slate-500'}`}>
+                <span
+                  className={`text-[10px] mt-1 font-medium ${
+                    isCurrent ? 'text-teal-400 font-bold' : isDone ? 'text-slate-300' : 'text-slate-500'
+                  }`}
+                >
                   {step.label}
                 </span>
               </div>
@@ -168,7 +208,7 @@ export default function CustomerDashboard() {
         <div>
           <span className="text-xs font-extrabold uppercase tracking-widest text-teal-400">Customer Workspace</span>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white mt-0.5">My Service Bookings</h1>
-          <p className="text-xs text-slate-400">Track service progress, chat with specialists, and leave verified reviews.</p>
+          <p className="text-xs text-slate-400">Track service progress, cancel/reschedule with reasons, and chat with specialists.</p>
         </div>
         <Link
           to="/explore"
@@ -178,6 +218,14 @@ export default function CustomerDashboard() {
           <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>
+
+      {/* Success Notification */}
+      {cancelSuccessMsg && (
+        <div className="p-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs flex items-center gap-2 animate-in fade-in">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{cancelSuccessMsg}</span>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex items-center gap-2 border-b border-slate-800 text-xs">
@@ -265,14 +313,24 @@ export default function CustomerDashboard() {
                 {/* Specialist */}
                 <div className="flex items-center gap-3">
                   <img
-                    src={b.professional?.userId?.avatar || b.professionalId?.userId?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'}
+                    src={
+                      b.professional?.userId?.avatar ||
+                      b.professionalId?.userId?.avatar ||
+                      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'
+                    }
                     alt="Pro"
                     className="w-12 h-12 rounded-2xl object-cover border border-teal-500/30 shrink-0"
                   />
                   <div>
-                    <h4 className="font-bold text-white text-sm">{b.professional?.businessName || b.professionalId?.businessName || 'Specialist'}</h4>
-                    <p className="text-slate-400 text-[11px]">{b.professional?.userId?.name || b.professionalId?.userId?.name || 'Verified Specialist'}</p>
-                    <p className="text-slate-400 text-[11px]">{b.professional?.userId?.phone || b.professionalId?.userId?.phone || '+91 98301 23456'}</p>
+                    <h4 className="font-bold text-white text-sm">
+                      {b.professional?.businessName || b.professionalId?.businessName || 'Specialist'}
+                    </h4>
+                    <p className="text-slate-400 text-[11px]">
+                      {b.professional?.userId?.name || b.professionalId?.userId?.name || 'Verified Specialist'}
+                    </p>
+                    <p className="text-slate-400 text-[11px]">
+                      {b.professional?.userId?.phone || b.professionalId?.userId?.phone || '+91 98301 23456'}
+                    </p>
                   </div>
                 </div>
 
@@ -287,30 +345,51 @@ export default function CustomerDashboard() {
                     <MapPin className="w-3.5 h-3.5 text-teal-400" />
                     {b.address?.addressLine}, {b.address?.city}
                   </p>
+
+                  {/* Delay Badge if Delayed */}
+                  {b.delayReason && (
+                    <p className="text-[11px] text-amber-300/90 font-semibold bg-amber-950/40 px-2.5 py-1 rounded-lg border border-amber-900/40 flex items-center gap-1.5 mt-1">
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span>Delay Notice: {b.delayReason}</span>
+                    </p>
+                  )}
+
+                  {/* Cancellation Reason if Cancelled */}
+                  {b.cancellationReason && (
+                    <p className="text-[11px] text-rose-300/90 italic bg-rose-950/40 px-2.5 py-1 rounded-lg border border-rose-900/40 mt-1">
+                      Reason: "{b.cancellationReason}"
+                    </p>
+                  )}
                 </div>
 
-                {/* Pricing & Chat CTA */}
+                {/* Pricing & Actions */}
                 <div className="flex flex-col sm:items-end justify-center space-y-2">
                   <div>
                     <span className="text-[10px] text-slate-400 block sm:text-right">Price</span>
-                    <span className="text-lg font-extrabold text-teal-400 sm:text-right block">₹{b.price || b.basePrice || 299}</span>
+                    <span className="text-lg font-extrabold text-teal-400 sm:text-right block">
+                      ₹{b.price || b.basePrice || 299}
+                    </span>
                   </div>
 
                   <div className="flex flex-wrap gap-2">
                     <Link
-                      to={`/messages?bookingId=${b._id}&targetUserId=${b.professionalId?.userId?._id}&targetName=${encodeURIComponent(b.professionalId?.businessName || 'Pro')}`}
+                      to={`/messages?bookingId=${b._id}&targetUserId=${b.professionalId?.userId?._id}&targetName=${encodeURIComponent(
+                        b.professionalId?.businessName || 'Pro'
+                      )}`}
                       className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-teal-300 border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition"
                     >
                       <MessageSquare className="w-3.5 h-3.5 text-teal-400" />
                       <span>Chat Specialist</span>
                     </Link>
 
-                    {b.status === 'PENDING' && (
+                    {/* Cancel Booking Button for active appointments */}
+                    {activeStatuses.includes(b.status) && b.status !== 'CANCELLED' && (
                       <button
-                        onClick={() => handleCancelBooking(b._id)}
-                        className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold transition"
+                        onClick={() => setSelectedBookingForCancel(b)}
+                        className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold transition flex items-center gap-1"
                       >
-                        Cancel
+                        <XCircle className="w-3.5 h-3.5" />
+                        <span>Cancel Booking</span>
                       </button>
                     )}
 
@@ -352,6 +431,84 @@ export default function CustomerDashboard() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Cancel Booking with Reason Modal */}
+      {selectedBookingForCancel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="w-full max-w-md p-6 bg-[#0b1322] border border-slate-700/80 rounded-3xl shadow-2xl relative space-y-4 text-xs">
+            <button
+              onClick={() => setSelectedBookingForCancel(null)}
+              className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="space-y-1">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-rose-400 bg-rose-500/10 px-2.5 py-0.5 rounded-full border border-rose-500/30">
+                Cancellation Request
+              </span>
+              <h3 className="text-base font-extrabold text-white">
+                Cancel Booking #{selectedBookingForCancel.bookingNumber}
+              </h3>
+              <p className="text-slate-400 text-xs">
+                Please provide a reason for cancelling your appointment with{' '}
+                <strong className="text-slate-200">
+                  {selectedBookingForCancel.professional?.businessName ||
+                    selectedBookingForCancel.professionalId?.businessName}
+                </strong>
+                .
+              </p>
+            </div>
+
+            <form onSubmit={confirmCancelWithReason} className="space-y-3 pt-1">
+              <div>
+                <label className="block text-slate-300 font-bold mb-1.5">Select Cancellation Reason:</label>
+                <select
+                  value={cancelPresetReason}
+                  onChange={(e) => setCancelPresetReason(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl bg-slate-950 border border-slate-700 text-white font-semibold focus:outline-none focus:border-rose-400 cursor-pointer"
+                >
+                  <option value="Change of plans / Schedule conflict">Change of plans / Schedule conflict</option>
+                  <option value="Booked by mistake / duplicate request">Booked by mistake / duplicate request</option>
+                  <option value="Emergency resolved / Service no longer required">Emergency resolved / Service no longer required</option>
+                  <option value="Specialist delayed / Need immediate alternate">Specialist delayed / Need immediate alternate</option>
+                  <option value="Found another local provider">Found another local provider</option>
+                  <option value="Other reason">Other reason (Please specify below)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-bold mb-1.5">
+                  Additional Details / Notes (Optional):
+                </label>
+                <textarea
+                  rows="3"
+                  placeholder="e.g. Need to reschedule to next month, or plumbing issue resolved by building maintenance."
+                  value={cancelCustomNotes}
+                  onChange={(e) => setCancelCustomNotes(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-rose-400"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedBookingForCancel(null)}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-semibold border border-slate-700 transition"
+                >
+                  Keep Booking
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold transition shadow-lg shadow-rose-500/25"
+                >
+                  Confirm Cancellation & Refund
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

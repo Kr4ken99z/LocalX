@@ -30,6 +30,7 @@ export default function Navbar({ selectedCity = 'Kolkata', onSelectCity, onUseMy
   const [profileDropdown, setProfileDropdown] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLocating, setIsLocating] = useState(false);
+  const [locationRedirectToast, setLocationRedirectToast] = useState(null);
 
   const cities = METROPOLITAN_CITIES;
 
@@ -46,6 +47,15 @@ export default function Navbar({ selectedCity = 'Kolkata', onSelectCity, onUseMy
       const loc = await detectSmartLocation();
       if (onSelectCity) onSelectCity(loc.city);
       if (onUseMyLocation) onUseMyLocation(loc);
+
+      if (loc.isRedirected) {
+        setLocationRedirectToast({
+          rawCity: loc.rawLocation || 'Ranaghat',
+          nearestCity: loc.city || 'Kolkata',
+          message: `No local professionals found in ${loc.rawLocation || 'Ranaghat'}. The nearest available service hub with verified professionals is ${loc.city || 'Kolkata'}. Redirected to ${loc.city || 'Kolkata'} specialists with live GPS dispatch.`,
+        });
+        setTimeout(() => setLocationRedirectToast(null), 9000);
+      }
     } catch (e) {
       if (onSelectCity) onSelectCity('Kolkata');
     } finally {
@@ -69,6 +79,38 @@ export default function Navbar({ selectedCity = 'Kolkata', onSelectCity, onUseMy
 
   return (
     <>
+      {/* Floating Location Redirect Notification Banner */}
+      {locationRedirectToast && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-xl px-4 animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="p-4 rounded-2xl bg-amber-950/95 border border-amber-500/50 shadow-2xl shadow-amber-950/60 backdrop-blur-xl flex items-start justify-between gap-3 text-white">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0 text-base font-bold mt-0.5">
+                📍
+              </div>
+              <div className="space-y-0.5">
+                <h4 className="font-extrabold text-xs text-amber-300 flex items-center gap-1.5">
+                  <span>No local professionals found in {locationRedirectToast.rawCity}</span>
+                  <span className="px-2 py-0.2 rounded bg-amber-500/20 text-[10px] text-amber-200 border border-amber-500/30">
+                    Live Dispatch
+                  </span>
+                </h4>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  The nearest available service hub with verified professionals is{' '}
+                  <strong className="text-white">{locationRedirectToast.nearestCity}</strong>. We've automatically
+                  connected you to {locationRedirectToast.nearestCity} specialists.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setLocationRedirectToast(null)}
+              className="p-1 rounded-lg hover:bg-amber-900/50 text-slate-400 hover:text-white transition shrink-0 text-xs"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
       <header className="sticky top-0 z-40 bg-[#080f1c]/90 border-b border-slate-800/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 gap-4">
