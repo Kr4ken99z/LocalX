@@ -171,8 +171,13 @@ export default function BookingModal({ professional, initialService = null, onCl
 
     // Save to localStorage for Customer and Admin dashboards
     try {
-      const existing = JSON.parse(localStorage.getItem('localx_admin_bookings') || '[]');
-      localStorage.setItem('localx_admin_bookings', JSON.stringify([confirmedData, ...existing]));
+      const existingCustomer = JSON.parse(localStorage.getItem('localx_customer_bookings') || '[]');
+      localStorage.setItem('localx_customer_bookings', JSON.stringify([confirmedData, ...existingCustomer.filter((b) => b._id !== confirmedData._id)]));
+
+      const existingAdmin = JSON.parse(localStorage.getItem('localx_admin_bookings') || '[]');
+      localStorage.setItem('localx_admin_bookings', JSON.stringify([confirmedData, ...existingAdmin.filter((b) => b._id !== confirmedData._id)]));
+
+      window.dispatchEvent(new Event('storage'));
     } catch (e) {}
 
     if (onSuccess) onSuccess(confirmedData);
@@ -326,7 +331,7 @@ export default function BookingModal({ professional, initialService = null, onCl
                   </label>
                   {!isDateOpen && (
                     <span className="text-[10px] text-amber-300 font-semibold bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/30">
-                      Near-term dates fully booked
+                      Not available on this date
                     </span>
                   )}
                 </div>
@@ -334,26 +339,26 @@ export default function BookingModal({ professional, initialService = null, onCl
                 {/* Quick 3-Day Presets: Today, Tomorrow, Day After */}
                 <div className="grid grid-cols-3 gap-2 mb-2.5">
                   {[
-                    { date: formatDateStr(today), label: 'Today', booked: true },
-                    { date: formatDateStr(tomorrow), label: 'Tomorrow', booked: true },
-                    { date: formatDateStr(dayAfter), label: 'Day After', booked: true },
+                    { date: formatDateStr(today), label: 'Today' },
+                    { date: formatDateStr(tomorrow), label: 'Tomorrow' },
+                    { date: formatDateStr(dayAfter), label: 'Day After' },
                   ].map((d) => (
                     <button
                       key={d.date}
                       type="button"
+                      title="Not available on this date"
                       onClick={() => {
                         setScheduledDate(d.date);
                         setScheduledTime('');
                         setError('');
                       }}
-                      className={`p-2 rounded-2xl border text-center transition ${
+                      className={`p-2.5 rounded-2xl border text-center transition ${
                         scheduledDate === d.date
-                          ? 'bg-rose-500/20 border-rose-500/60 text-white'
-                          : 'bg-slate-950/70 border-slate-800 text-slate-400 hover:border-slate-700'
+                          ? 'bg-amber-500/15 border-amber-500/50 text-amber-300 shadow-sm'
+                          : 'bg-slate-950/70 border-slate-800 text-slate-300 hover:border-slate-700 hover:text-white'
                       }`}
                     >
-                      <span className="font-bold text-[11px] block">{d.label}</span>
-                      <span className="text-[9px] font-bold text-rose-400 mt-0.5 block">🔴 Fully Booked</span>
+                      <span className="font-bold text-xs block">{d.label}</span>
                     </button>
                   ))}
                 </div>
@@ -369,10 +374,10 @@ export default function BookingModal({ professional, initialService = null, onCl
                       className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${
                         isDateOpen
                           ? 'bg-teal-500/15 text-teal-300 border-teal-500/40'
-                          : 'bg-rose-500/15 text-rose-300 border-rose-500/40'
+                          : 'bg-amber-500/15 text-amber-300 border-amber-500/40'
                       }`}
                     >
-                      {isDateOpen ? '🟢 Open Slots Available' : '🔴 Fully Booked in Near Term'}
+                      {isDateOpen ? '🟢 Open Slots Available' : '⚠️ Not available on this date'}
                     </span>
                   </div>
 
@@ -395,11 +400,11 @@ export default function BookingModal({ professional, initialService = null, onCl
 
                   {/* Informative Status Banner */}
                   {!isDateOpen ? (
-                    <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-[11px] flex items-start gap-2">
-                      <AlertTriangle className="w-4 h-4 shrink-0 text-rose-400 mt-0.5" />
+                    <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
                       <div>
-                        <strong className="block font-bold text-rose-200">Near-Term Schedule is 100% Reserved</strong>
-                        Demo specialist is fully booked for near-term dates. Pick an advance date on the calendar <strong>2+ months later ({formatDateStr(twoMonthsLater)} onwards)</strong> to reserve an open slot.
+                        <strong className="block font-bold text-amber-200">Not available on this date</strong>
+                        This specialist has no open slots on this date. Please choose a date <strong>2 months later on the calendar ({formatDateStr(twoMonthsLater)} onwards)</strong> to reserve an open booking slot.
                       </div>
                     </div>
                   ) : (
