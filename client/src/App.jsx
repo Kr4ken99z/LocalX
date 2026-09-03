@@ -23,9 +23,9 @@ import ProVerification from './pages/ProfessionalPortal/ProVerification';
 import AdminDashboard from './pages/AdminPortal/AdminDashboard';
 import ChatPage from './pages/ChatPage';
 
-// Protected Route Wrapper
-function ProtectedRoute({ children, allowedRoles = [] }) {
-  const { user, loading } = useAuth();
+// Protected Route Wrapper - Allows seamless demo exploration without bouncing to home
+function ProtectedRoute({ children }) {
+  const { loading } = useAuth();
 
   if (loading) {
     return (
@@ -33,14 +33,6 @@ function ProtectedRoute({ children, allowedRoles = [] }) {
         <div className="animate-spin w-8 h-8 border-2 border-teal-400 border-t-transparent rounded-full"></div>
       </div>
     );
-  }
-
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/" replace />;
   }
 
   return children;
@@ -100,7 +92,15 @@ function MainLayout() {
             <Route
               path="/customer"
               element={
-                <ProtectedRoute allowedRoles={['customer', 'admin']}>
+                <ProtectedRoute>
+                  <CustomerDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/customer/dashboard"
+              element={
+                <ProtectedRoute>
                   <CustomerDashboard />
                 </ProtectedRoute>
               }
@@ -108,7 +108,7 @@ function MainLayout() {
             <Route
               path="/customer/profile"
               element={
-                <ProtectedRoute allowedRoles={['customer', 'admin']}>
+                <ProtectedRoute>
                   <CustomerProfile />
                 </ProtectedRoute>
               }
@@ -118,7 +118,15 @@ function MainLayout() {
             <Route
               path="/professional"
               element={
-                <ProtectedRoute allowedRoles={['professional', 'admin']}>
+                <ProtectedRoute>
+                  <ProDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/professional/dashboard"
+              element={
+                <ProtectedRoute>
                   <ProDashboard />
                 </ProtectedRoute>
               }
@@ -126,7 +134,7 @@ function MainLayout() {
             <Route
               path="/professional/services"
               element={
-                <ProtectedRoute allowedRoles={['professional', 'admin']}>
+                <ProtectedRoute>
                   <ProServices />
                 </ProtectedRoute>
               }
@@ -134,7 +142,7 @@ function MainLayout() {
             <Route
               path="/professional/verification"
               element={
-                <ProtectedRoute allowedRoles={['professional', 'admin']}>
+                <ProtectedRoute>
                   <ProVerification />
                 </ProtectedRoute>
               }
@@ -144,7 +152,15 @@ function MainLayout() {
             <Route
               path="/admin"
               element={
-                <ProtectedRoute allowedRoles={['admin']}>
+                <ProtectedRoute>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/dashboard"
+              element={
+                <ProtectedRoute>
                   <AdminDashboard />
                 </ProtectedRoute>
               }
