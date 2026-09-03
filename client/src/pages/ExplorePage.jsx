@@ -188,6 +188,20 @@ export default function ExplorePage({ selectedCity = 'Kolkata', onSelectCity }) 
     currentPage * itemsPerPage
   );
 
+  // Helper to generate pagination with ellipsis/dots (e.g. 1 2 3 4 5 ... 14)
+  const getPaginationItems = (current, total) => {
+    if (total <= 7) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    if (current <= 4) {
+      return [1, 2, 3, 4, 5, '...', total];
+    }
+    if (current >= total - 3) {
+      return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+    }
+    return [1, '...', current - 1, current, current + 1, '...', total];
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Explore Hero Banner (Matching User's Boat & Beacon Metaphor) */}
@@ -636,24 +650,37 @@ export default function ExplorePage({ selectedCity = 'Kolkata', onSelectCity }) 
                         <span>Prev</span>
                       </button>
 
-                      {/* Numbered Page Buttons */}
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                        <button
-                          key={pageNum}
-                          type="button"
-                          onClick={() => {
-                            setCurrentPage(pageNum);
-                            window.scrollTo({ top: 350, behavior: 'smooth' });
-                          }}
-                          className={`w-8 h-8 rounded-xl flex items-center justify-center transition font-bold ${
-                            currentPage === pageNum
-                              ? 'bg-teal-400 text-slate-950 font-black shadow-lg shadow-teal-500/25 scale-105'
-                              : 'bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800'
-                          }`}
-                        >
-                          {pageNum}
-                        </button>
-                      ))}
+                      {/* Numbered Page Buttons with Dots */}
+                      {getPaginationItems(currentPage, totalPages).map((item, idx) => {
+                        if (item === '...') {
+                          return (
+                            <span
+                              key={`dots-${idx}`}
+                              className="w-7 h-8 flex items-center justify-center text-slate-500 font-extrabold select-none text-xs"
+                            >
+                              …
+                            </span>
+                          );
+                        }
+                        const pageNum = Number(item);
+                        return (
+                          <button
+                            key={pageNum}
+                            type="button"
+                            onClick={() => {
+                              setCurrentPage(pageNum);
+                              window.scrollTo({ top: 350, behavior: 'smooth' });
+                            }}
+                            className={`w-8 h-8 rounded-xl flex items-center justify-center transition font-bold text-xs ${
+                              currentPage === pageNum
+                                ? 'bg-teal-400 text-slate-950 font-black shadow-lg shadow-teal-500/25 scale-105'
+                                : 'bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800'
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
 
                       {/* Next Page */}
                       <button
