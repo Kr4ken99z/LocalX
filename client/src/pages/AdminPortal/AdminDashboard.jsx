@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import {
   Shield,
   Users,
@@ -20,6 +21,7 @@ import {
   RefreshCw,
   UserPlus,
   Crown,
+  LogOut,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { FALLBACK_PROS, FALLBACK_CATEGORIES } from '../../utils/mockData';
@@ -189,7 +191,8 @@ const INITIAL_DEMO_AUDIT = [
 ];
 
 export default function AdminDashboard() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'verifications', 'users', 'bookings', 'disputes', 'categories', 'audit'
   const [loading, setLoading] = useState(false);
 
@@ -537,13 +540,25 @@ export default function AdminDashboard() {
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white mt-0.5">Admin Management Console</h1>
           <p className="text-slate-400">Audit verification queues, monitor platform disputes, and manage users and categories.</p>
         </div>
-        <button
-          onClick={fetchDashboardData}
-          className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 font-semibold flex items-center gap-1.5 transition self-start sm:self-auto"
-        >
-          <RefreshCw className="w-3.5 h-3.5 text-teal-400" />
-          <span>Refresh Data</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            onClick={fetchDashboardData}
+            className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 font-semibold flex items-center gap-1.5 transition"
+          >
+            <RefreshCw className="w-3.5 h-3.5 text-teal-400" />
+            <span>Refresh Data</span>
+          </button>
+          <button
+            onClick={() => {
+              logout();
+              navigate('/');
+            }}
+            className="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 font-semibold flex items-center gap-1.5 transition"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Sign Out</span>
+          </button>
+        </div>
       </div>
 
       {actionSuccess && (
@@ -647,7 +662,7 @@ export default function AdminDashboard() {
                       {log.action}
                     </span>
                     <span className="text-slate-300">
-                      Target: {log.targetType} (#{log.targetId.slice(-6)})
+                      Target: {log.targetType} {log.targetId ? `(#${String(log.targetId).slice(-6)})` : ''}
                     </span>
                   </div>
                   <span className="text-slate-500">{new Date(log.createdAt).toLocaleString()}</span>
@@ -1159,7 +1174,9 @@ export default function AdminDashboard() {
                     <span className="px-2 py-0.5 rounded font-mono font-bold text-[10px] bg-slate-900 text-rose-400 border border-slate-800">
                       {log.action}
                     </span>
-                    <span className="text-white font-semibold">Target: {log.targetType} (#{log.targetId.slice(-6)})</span>
+                    <span className="text-white font-semibold">
+                      Target: {log.targetType} {log.targetId ? `(#${String(log.targetId).slice(-6)})` : ''}
+                    </span>
                   </div>
                   <span className="text-slate-500 text-[10px]">{new Date(log.createdAt).toLocaleString()}</span>
                 </div>

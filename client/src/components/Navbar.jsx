@@ -422,20 +422,52 @@ export default function Navbar({ selectedCity = 'Kolkata', onSelectCity, onUseMy
 
             {/* Bottom Actions in Drawer */}
             <div className="pt-6 border-t border-slate-800 flex flex-col gap-2">
-              <Link
-                to="/register"
-                onClick={() => setMenuOpen(false)}
-                className="w-full py-2.5 rounded-xl bg-teal-400 hover:bg-teal-300 text-slate-950 font-bold text-center transition"
-              >
-                Join LocalX
-              </Link>
-              <Link
-                to="/login"
-                onClick={() => setMenuOpen(false)}
-                className="w-full py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-semibold text-center border border-slate-800"
-              >
-                Sign in
-              </Link>
+              {user ? (
+                <>
+                  <div className="p-3 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <img
+                        src={user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'}
+                        alt={user.name}
+                        className="w-8 h-8 rounded-xl object-cover border border-teal-500/40"
+                      />
+                      <div className="text-left">
+                        <p className="text-white font-bold text-xs truncate max-w-[140px]">{user.name}</p>
+                        <p className="text-[10px] text-teal-400 capitalize font-semibold">{user.role}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      logout();
+                      setMenuOpen(false);
+                      navigate('/');
+                    }}
+                    className="w-full py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 font-bold text-center border border-rose-500/30 transition flex items-center justify-center gap-2"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Sign Out</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/register"
+                    onClick={() => setMenuOpen(false)}
+                    className="w-full py-2.5 rounded-xl bg-teal-400 hover:bg-teal-300 text-slate-950 font-bold text-center transition"
+                  >
+                    Join LocalX
+                  </Link>
+                  <Link
+                    to="/login"
+                    onClick={() => setMenuOpen(false)}
+                    className="w-full py-2 rounded-xl bg-slate-900 hover:bg-slate-850 text-slate-300 font-semibold text-center border border-slate-800"
+                  >
+                    Sign in
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

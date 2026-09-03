@@ -20,6 +20,7 @@ import {
 import TrustScoreBadge from '../components/TrustScoreBadge';
 import BookingModal from '../components/BookingModal';
 import { useAuth } from '../context/AuthContext';
+import { FALLBACK_PROS } from '../utils/mockData';
 
 export default function ProfessionalProfilePage() {
   const { id } = useParams();
@@ -34,14 +35,15 @@ export default function ProfessionalProfilePage() {
     const fetchPro = async () => {
       try {
         const res = await axios.get(`/api/professionals/${id}`);
-        if (res.data.success) {
+        if (res.data.success && res.data.data) {
           setPro(res.data.data);
+          setLoading(false);
+          return;
         }
-      } catch (err) {
-        console.error('Fetch pro profile error:', err);
-      } finally {
-        setLoading(false);
-      }
+      } catch (err) {}
+      const fallback = FALLBACK_PROS.find((p) => p._id === id) || FALLBACK_PROS[0];
+      setPro(fallback);
+      setLoading(false);
     };
     fetchPro();
   }, [id]);
@@ -104,6 +106,15 @@ export default function ProfessionalProfilePage() {
                   </span>
                 )}
               </div>
+
+              {pro.ownerName && (
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-slate-400">Lead Specialist:</span>
+                  <span className="text-white font-extrabold bg-slate-800/90 px-2.5 py-0.5 rounded-lg border border-slate-700">
+                    {pro.ownerName}
+                  </span>
+                </div>
+              )}
 
               <p className="text-xs sm:text-sm text-slate-300 max-w-xl">{pro.tagline || pro.description}</p>
 
