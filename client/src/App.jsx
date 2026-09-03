@@ -50,10 +50,22 @@ function MainLayout() {
   const [selectedCity, setSelectedCity] = useState('Kolkata');
   const location = useLocation();
 
-  const isAuth = location.pathname.startsWith('/login') || location.pathname.startsWith('/register');
-  const videoUrl = isAuth
-    ? 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663881845200/JaabPndEbiPjucfU.mp4'
-    : 'https://storage.getlayers.ai/backgrounds/moon-walk.mp4';
+  // 3 dedicated window background videos per user request:
+  // 1. Exploration page -> sea-storm.mp4 (the boat in unknown waters ocean video)
+  // 2. Login & Account section (/login, /register, /customer, /professional, /admin) -> purple-desert.mp4
+  // 3. Home page -> moon-walk.mp4
+  let videoUrl = 'https://storage.getlayers.ai/backgrounds/moon-walk.mp4';
+  if (location.pathname.startsWith('/explore')) {
+    videoUrl = 'https://storage.getlayers.ai/backgrounds/sea-storm.mp4';
+  } else if (
+    location.pathname.startsWith('/login') ||
+    location.pathname.startsWith('/register') ||
+    location.pathname.startsWith('/customer') ||
+    location.pathname.startsWith('/professional') ||
+    location.pathname.startsWith('/admin')
+  ) {
+    videoUrl = 'https://storage.getlayers.ai/backgrounds/purple-desert.mp4';
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#080f1c] text-slate-100 antialiased selection:bg-teal-500 selection:text-white relative">
