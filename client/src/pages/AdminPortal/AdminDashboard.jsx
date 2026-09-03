@@ -314,6 +314,65 @@ export default function AdminDashboard() {
     setUserPage(1);
   }, [userSearch, userRoleFilter]);
 
+  // Bookings Control Center States
+  const [bookingPage, setBookingPage] = useState(1);
+  const bookingsPerPage = 8;
+  const [bookingSearch, setBookingSearch] = useState('');
+  const [bookingStatusFilter, setBookingStatusFilter] = useState('all');
+  const [selectedBookingForInspect, setSelectedBookingForInspect] = useState(null);
+
+  useEffect(() => {
+    setBookingPage(1);
+  }, [bookingSearch, bookingStatusFilter]);
+
+  // Sync bookings live from localStorage
+  useEffect(() => {
+    const handleStorageUpdate = () => {
+      try {
+        const saved = localStorage.getItem('localx_admin_bookings');
+        if (saved) {
+          setBookingsList(JSON.parse(saved));
+        }
+      } catch (e) {}
+    };
+    window.addEventListener('storage', handleStorageUpdate);
+    return () => window.removeEventListener('storage', handleStorageUpdate);
+  }, []);
+
+  const handleUpdateBookingStatus = (bookingId, newStatus) => {
+    const updated = bookingsList.map((b) => (b._id === bookingId ? { ...b, status: newStatus } : b));
+    setBookingsList(updated);
+    localStorage.setItem('localx_admin_bookings', JSON.stringify(updated));
+    localStorage.setItem('localx_customer_bookings', JSON.stringify(updated));
+    window.dispatchEvent(new Event('storage'));
+    setActionSuccess(`Booking status updated to ${newStatus}`);
+    setTimeout(() => setActionSuccess(''), 3000);
+  };
+
+  const handleCancelBookingByAdmin = (bookingId) => {
+    if (!window.confirm('Are you sure you want to cancel this booking and mark it as refunded?')) return;
+    const updated = bookingsList.map((b) =>
+      b._id === bookingId ? { ...b, status: 'CANCELLED', cancelledBy: 'Platform Admin' } : b
+    );
+    setBookingsList(updated);
+    localStorage.setItem('localx_admin_bookings', JSON.stringify(updated));
+    localStorage.setItem('localx_customer_bookings', JSON.stringify(updated));
+    window.dispatchEvent(new Event('storage'));
+    setActionSuccess('Booking cancelled and marked for refund.');
+    setTimeout(() => setActionSuccess(''), 3000);
+  };
+
+  const handleDeleteBookingByAdmin = (bookingId) => {
+    if (!window.confirm('Are you sure you want to permanently delete this booking record?')) return;
+    const updated = bookingsList.filter((b) => b._id !== bookingId);
+    setBookingsList(updated);
+    localStorage.setItem('localx_admin_bookings', JSON.stringify(updated));
+    localStorage.setItem('localx_customer_bookings', JSON.stringify(updated));
+    window.dispatchEvent(new Event('storage'));
+    setActionSuccess('Booking record permanently deleted.');
+    setTimeout(() => setActionSuccess(''), 3000);
+  };
+
   // New Category State
   const [newCatName, setNewCatName] = useState('');
   const [newCatSlug, setNewCatSlug] = useState('');
@@ -323,6 +382,7 @@ export default function AdminDashboard() {
 
   // Keep metrics synchronized with state
   useEffect(() => {
+    const revenue = bookingsList.reduce((acc, b) => acc + (Number(b.price || b.basePrice) || 0), 0);
     setMetrics({
       totalUsers: usersList.length,
       verifiedPros: professionals.filter((p) => p.verificationStatus === 'VERIFIED').length,
@@ -330,8 +390,8 @@ export default function AdminDashboard() {
       totalBookings: bookingsList.length,
       completedBookings: bookingsList.filter((b) => b.status === 'COMPLETED').length,
       disputes: disputesList.filter((d) => d.status === 'OPEN').length,
-      totalRevenue: 34950,
-      activeBookings: bookingsList.filter((b) => b.status === 'CONFIRMED' || b.status === 'IN_PROGRESS').length,
+      totalRevenue: revenue || 34950,
+      activeBookings: bookingsList.filter((b) => b.status === 'CONFIRMED' || b.status === 'IN_PROGRESS' || b.status === 'ACCEPTED').length,
     });
   }, [professionals, usersList, bookingsList, disputesList]);
 
@@ -633,6 +693,30 @@ export default function AdminDashboard() {
   const paginatedUsers = filteredUsers.slice(
     (userPage - 1) * usersPerPage,
     userPage * usersPerPage
+  );
+
+  // Bookings Control Calculations
+  const filteredBookings = bookingsList.filter((b) => {
+    const term = bookingSearch.toLowerCase().trim();
+    const matchesSearch =
+      !term ||
+      b.bookingNumber?.toLowerCase().includes(term) ||
+      b.serviceName?.toLowerCase().includes(term) ||
+      (b.customer?.name || b.customerId?.name || '')?.toLowerCase().includes(term) ||
+      (b.customer?.email || b.customerId?.email || '')?.toLowerCase().includes(term) ||
+      (b.customer?.phone || '')?.toLowerCase().includes(term) ||
+      (b.professional?.businessName || b.professionalId?.businessName || '')?.toLowerCase().includes(term);
+
+    const matchesStatus =
+      bookingStatusFilter === 'all' || b.status === bookingStatusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
+  const totalBookingPages = Math.max(1, Math.ceil(filteredBookings.length / bookingsPerPage));
+  const paginatedBookings = filteredBookings.slice(
+    (bookingPage - 1) * bookingsPerPage,
+    bookingPage * bookingsPerPage
   );
 
   const getPaginationItems = (current, total) => {
@@ -1332,44 +1416,409 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* TAB 5: BOOKINGS MONITOR */}
+      {/* TAB 5: BOOKINGS CONTROL CENTER */}
       {activeTab === 'bookings' && (
         <div className="glass-panel p-6 rounded-3xl space-y-4">
-          <h2 className="text-base font-extrabold text-white flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-violet-400" />
-            <span>All Platform Bookings ({bookingsList.length})</span>
-          </h2>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-base font-extrabold text-white flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-violet-400" />
+                <span>Master Bookings Control Suite ({bookingsList.length})</span>
+              </h2>
+              <p className="text-slate-400 text-xs mt-0.5">
+                Full administrative authority over platform appointments, dispatch statuses, cancellations, and customer refunds.
+              </p>
+            </div>
+            <div className="px-3 py-1.5 rounded-xl bg-violet-500/10 border border-violet-500/30 text-violet-300 font-bold text-xs flex items-center gap-1.5 shrink-0">
+              <DollarSign className="w-4 h-4 text-violet-400" />
+              <span>
+                Total Volume: ₹
+                {bookingsList.reduce((acc, b) => acc + (Number(b.price || b.basePrice) || 0), 0)}
+              </span>
+            </div>
+          </div>
 
+          {/* Search & Filter Controls */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={bookingSearch}
+                onChange={(e) => setBookingSearch(e.target.value)}
+                placeholder="Search by Booking #, Customer, Pro, or Service..."
+                className="w-full pl-9 pr-7 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-violet-500/50"
+              />
+              {bookingSearch && (
+                <button
+                  onClick={() => setBookingSearch('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1.5 overflow-x-auto">
+              {[
+                { id: 'all', label: `All (${bookingsList.length})` },
+                {
+                  id: 'CONFIRMED',
+                  label: `Confirmed (${bookingsList.filter((b) => b.status === 'CONFIRMED' || b.status === 'ACCEPTED').length})`,
+                },
+                {
+                  id: 'IN_PROGRESS',
+                  label: `In Progress (${bookingsList.filter((b) => b.status === 'IN_PROGRESS' || b.status === 'ON_THE_WAY').length})`,
+                },
+                {
+                  id: 'COMPLETED',
+                  label: `Completed (${bookingsList.filter((b) => b.status === 'COMPLETED').length})`,
+                },
+                {
+                  id: 'CANCELLED',
+                  label: `Cancelled (${bookingsList.filter((b) => b.status === 'CANCELLED' || b.status === 'REJECTED').length})`,
+                },
+              ].map((bf) => (
+                <button
+                  key={bf.id}
+                  onClick={() => setBookingStatusFilter(bf.id)}
+                  className={`px-3 py-1.5 rounded-xl font-bold transition text-[11px] shrink-0 ${
+                    bookingStatusFilter === bf.id
+                      ? 'bg-violet-500 text-white shadow-md shadow-violet-500/25'
+                      : 'bg-slate-950 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-900'
+                  }`}
+                >
+                  {bf.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Bookings Table */}
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="text-slate-400 border-b border-slate-800">
                 <tr>
-                  <th className="py-2.5">Booking #</th>
-                  <th>Service</th>
-                  <th>Customer</th>
-                  <th>Specialist</th>
-                  <th>Price</th>
-                  <th>Status</th>
+                  <th className="py-2.5">Booking # & Schedule</th>
+                  <th>Service Details</th>
+                  <th>Customer Info</th>
+                  <th>Assigned Specialist</th>
+                  <th>Amount</th>
+                  <th>Admin Status Control</th>
+                  <th className="text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
-                {bookingsList.map((b) => (
-                  <tr key={b._id} className="hover:bg-slate-900/40">
-                    <td className="py-3 font-mono text-teal-400 font-bold">#{b.bookingNumber}</td>
-                    <td className="font-bold text-white">{b.serviceName}</td>
-                    <td className="text-slate-300">{b.customerId?.name}</td>
-                    <td className="text-slate-300">{b.professionalId?.businessName}</td>
-                    <td className="font-bold text-teal-400">₹{b.price}</td>
-                    <td>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300">
-                        {b.status}
-                      </span>
+                {paginatedBookings.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" className="py-8 text-center text-slate-400">
+                      No booking records matched your filter criteria.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  paginatedBookings.map((b) => {
+                    const statusColor =
+                      b.status === 'COMPLETED'
+                        ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10'
+                        : b.status === 'CANCELLED' || b.status === 'REJECTED'
+                        ? 'text-rose-400 border-rose-500/30 bg-rose-500/10'
+                        : b.status === 'IN_PROGRESS' || b.status === 'ON_THE_WAY'
+                        ? 'text-amber-300 border-amber-500/30 bg-amber-500/10'
+                        : 'text-teal-300 border-teal-500/30 bg-teal-500/10';
+
+                    return (
+                      <tr key={b._id} className="hover:bg-slate-900/40">
+                        {/* Booking # & Schedule */}
+                        <td className="py-3">
+                          <span className="font-mono font-bold text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded border border-violet-500/30 text-[11px] block w-fit">
+                            #{b.bookingNumber}
+                          </span>
+                          <span className="text-[11px] text-slate-300 font-semibold block mt-1">
+                            {b.scheduledDate}
+                          </span>
+                          <span className="text-[10px] text-slate-500 block">{b.scheduledTime}</span>
+                        </td>
+
+                        {/* Service Details */}
+                        <td>
+                          <p className="font-bold text-white text-xs">{b.serviceName}</p>
+                          <span className="text-[10px] text-slate-400 capitalize bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800 inline-block mt-0.5">
+                            {b.category || 'General Service'}
+                          </span>
+                        </td>
+
+                        {/* Customer Info */}
+                        <td>
+                          <p className="font-bold text-slate-200">
+                            {b.customer?.name || b.customerId?.name || 'Verified Customer'}
+                          </p>
+                          <p className="text-[11px] text-slate-400">
+                            {b.customer?.email || b.customerId?.email || 'customer@localx.app'}
+                          </p>
+                          <p className="text-[10px] text-slate-500">
+                            {b.customer?.phone || b.customerId?.phone || '+91 98301 23456'}
+                          </p>
+                        </td>
+
+                        {/* Assigned Specialist */}
+                        <td>
+                          <p className="font-bold text-teal-300">
+                            {b.professional?.businessName || b.professionalId?.businessName || 'Specialist'}
+                          </p>
+                          <p className="text-[11px] text-slate-400">
+                            {b.address?.city || 'Kolkata Metro'}
+                          </p>
+                        </td>
+
+                        {/* Amount */}
+                        <td>
+                          <span className="font-extrabold text-teal-400 text-xs">
+                            ₹{b.price || b.basePrice || 299}
+                          </span>
+                        </td>
+
+                        {/* Admin Status Dropdown Control */}
+                        <td>
+                          <select
+                            value={b.status}
+                            onChange={(e) => handleUpdateBookingStatus(b._id, e.target.value)}
+                            className={`px-2.5 py-1 rounded-lg border font-bold text-[11px] cursor-pointer focus:outline-none bg-slate-950 ${statusColor}`}
+                          >
+                            <option value="PENDING" className="bg-slate-900 text-slate-300">
+                              PENDING (Requested)
+                            </option>
+                            <option value="CONFIRMED" className="bg-slate-900 text-teal-300">
+                              CONFIRMED (Scheduled)
+                            </option>
+                            <option value="IN_PROGRESS" className="bg-slate-900 text-amber-300">
+                              IN PROGRESS
+                            </option>
+                            <option value="COMPLETED" className="bg-slate-900 text-emerald-400">
+                              COMPLETED (Verified)
+                            </option>
+                            <option value="CANCELLED" className="bg-slate-900 text-rose-400">
+                              CANCELLED / REFUNDED
+                            </option>
+                          </select>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="text-right space-x-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedBookingForInspect(b)}
+                            title="Inspect Full Booking Details"
+                            className="px-2 py-1 rounded-lg text-[11px] font-bold bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 transition inline-flex items-center gap-1"
+                          >
+                            <Eye className="w-3.5 h-3.5 text-slate-400" />
+                            <span>Inspect</span>
+                          </button>
+
+                          {b.status !== 'CANCELLED' && (
+                            <button
+                              type="button"
+                              onClick={() => handleCancelBookingByAdmin(b._id)}
+                              title="Cancel Booking and Issue Refund"
+                              className="px-2 py-1 rounded-lg text-[11px] font-semibold bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition inline-flex items-center"
+                            >
+                              Cancel/Refund
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteBookingByAdmin(b._id)}
+                            title="Delete Record"
+                            className="p-1 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition inline-block align-middle"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
+
+          {/* Bookings Pagination Controls */}
+          {totalBookingPages > 1 && (
+            <div className="pt-4 pb-2 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-xs text-slate-400">
+                Showing <strong className="text-white">{(bookingPage - 1) * bookingsPerPage + 1}</strong> to{' '}
+                <strong className="text-white">
+                  {Math.min(bookingPage * bookingsPerPage, filteredBookings.length)}
+                </strong>{' '}
+                of <strong className="text-violet-400">{filteredBookings.length}</strong> bookings
+              </p>
+
+              <div className="flex items-center gap-1.5 text-xs font-bold">
+                {/* Previous Page */}
+                <button
+                  type="button"
+                  onClick={() => setBookingPage((p) => Math.max(1, p - 1))}
+                  disabled={bookingPage === 1}
+                  className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-40 disabled:pointer-events-none transition flex items-center gap-1"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Prev</span>
+                </button>
+
+                {/* Page Numbers */}
+                {getPaginationItems(bookingPage, totalBookingPages).map((item, idx) => {
+                  if (item === '...') {
+                    return (
+                      <span
+                        key={`b-dots-${idx}`}
+                        className="w-7 h-8 flex items-center justify-center text-slate-500 font-extrabold select-none text-xs"
+                      >
+                        …
+                      </span>
+                    );
+                  }
+                  const pageNum = Number(item);
+                  return (
+                    <button
+                      key={`b-page-${pageNum}`}
+                      type="button"
+                      onClick={() => setBookingPage(pageNum)}
+                      className={`w-8 h-8 rounded-xl flex items-center justify-center transition font-bold text-xs ${
+                        bookingPage === pageNum
+                          ? 'bg-violet-500 text-white font-black shadow-lg shadow-violet-500/25 scale-105'
+                          : 'bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+
+                {/* Next Page */}
+                <button
+                  type="button"
+                  onClick={() => setBookingPage((p) => Math.min(totalBookingPages, p + 1))}
+                  disabled={bookingPage === totalBookingPages}
+                  className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-40 disabled:pointer-events-none transition flex items-center gap-1"
+                >
+                  <span>Next</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Booking Full Details Inspection Modal */}
+          {selectedBookingForInspect && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+              <div className="w-full max-w-lg p-6 bg-slate-950 border border-slate-800 rounded-3xl space-y-4 relative shadow-2xl">
+                <button
+                  onClick={() => setSelectedBookingForInspect(null)}
+                  className="absolute top-4 right-4 p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"
+                >
+                  ✕
+                </button>
+
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-2xl bg-violet-500/20 border border-violet-500/40 flex items-center justify-center text-violet-400 font-bold text-sm">
+                    LX
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+                      <span>Booking #{selectedBookingForInspect.bookingNumber}</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/40 font-bold">
+                        {selectedBookingForInspect.status}
+                      </span>
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      Created on {new Date(selectedBookingForInspect.createdAt || Date.now()).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-3 p-4 rounded-2xl bg-slate-900/80 border border-slate-800 text-xs">
+                  <div className="grid grid-cols-2 gap-3 border-b border-slate-800 pb-3">
+                    <div>
+                      <span className="text-slate-400 font-medium block">Service Item</span>
+                      <strong className="text-white block mt-0.5">{selectedBookingForInspect.serviceName}</strong>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-medium block">Total Price</span>
+                      <strong className="text-teal-400 block mt-0.5 text-sm">
+                        ₹{selectedBookingForInspect.price || selectedBookingForInspect.basePrice || 299}
+                      </strong>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 border-b border-slate-800 pb-3">
+                    <div>
+                      <span className="text-slate-400 font-medium block">Customer Information</span>
+                      <p className="text-slate-200 font-bold mt-0.5">
+                        {selectedBookingForInspect.customer?.name || selectedBookingForInspect.customerId?.name || 'Customer'}
+                      </p>
+                      <p className="text-slate-400 text-[11px]">
+                        {selectedBookingForInspect.customer?.email || selectedBookingForInspect.customerId?.email}
+                      </p>
+                      <p className="text-slate-400 text-[11px]">
+                        {selectedBookingForInspect.customer?.phone || selectedBookingForInspect.customerId?.phone}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-medium block">Assigned Specialist</span>
+                      <p className="text-teal-300 font-bold mt-0.5">
+                        {selectedBookingForInspect.professional?.businessName ||
+                          selectedBookingForInspect.professionalId?.businessName}
+                      </p>
+                      <p className="text-slate-400 text-[11px]">
+                        {selectedBookingForInspect.scheduledDate} ({selectedBookingForInspect.scheduledTime})
+                      </p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-slate-400 font-medium block">Service Address & Notes</span>
+                    <p className="text-slate-200 mt-0.5">
+                      {selectedBookingForInspect.address?.addressLine || 'Address on file'},{' '}
+                      {selectedBookingForInspect.address?.city || 'Kolkata'}
+                      {selectedBookingForInspect.address?.landmark && ` (Near ${selectedBookingForInspect.address.landmark})`}
+                    </p>
+                    {selectedBookingForInspect.notes && (
+                      <p className="text-slate-400 text-[11px] italic mt-1 bg-slate-950 p-2 rounded-lg border border-slate-800">
+                        Note: "{selectedBookingForInspect.notes}"
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-3 pt-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400 text-xs">Set Status:</span>
+                    <select
+                      value={selectedBookingForInspect.status}
+                      onChange={(e) => {
+                        handleUpdateBookingStatus(selectedBookingForInspect._id, e.target.value);
+                        setSelectedBookingForInspect((prev) => ({ ...prev, status: e.target.value }));
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-white font-bold text-xs"
+                    >
+                      <option value="PENDING">PENDING</option>
+                      <option value="CONFIRMED">CONFIRMED</option>
+                      <option value="IN_PROGRESS">IN_PROGRESS</option>
+                      <option value="COMPLETED">COMPLETED</option>
+                      <option value="CANCELLED">CANCELLED</option>
+                    </select>
+                  </div>
+
+                  <button
+                    onClick={() => setSelectedBookingForInspect(null)}
+                    className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
