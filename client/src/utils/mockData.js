@@ -37,7 +37,7 @@ export const FALLBACK_PROS = [
     ],
     userId: {
       name: 'Subhashish Das',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
+      avatar: '/avatars/pro_elec_1.jpg',
     },
   },
   {
@@ -66,7 +66,7 @@ export const FALLBACK_PROS = [
     ],
     userId: {
       name: 'Debabrata Mukherjee',
-      avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=250&q=80',
+      avatar: '/avatars/pro_elec_2.jpg',
     },
   },
 
@@ -97,7 +97,7 @@ export const FALLBACK_PROS = [
     ],
     userId: {
       name: 'Amitava Roy',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80',
+      avatar: '/avatars/pro_ac_1.jpg',
     },
   },
   {
@@ -126,7 +126,7 @@ export const FALLBACK_PROS = [
     ],
     userId: {
       name: 'Pritam Ghosh',
-      avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=250&q=80',
+      avatar: '/avatars/pro_ac_2.jpg',
     },
   },
 
@@ -157,7 +157,7 @@ export const FALLBACK_PROS = [
     ],
     userId: {
       name: 'Sunil Mahato',
-      avatar: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?auto=format&fit=crop&w=250&q=80',
+      avatar: '/avatars/pro_plumb_1.jpg',
     },
   },
   {
@@ -186,7 +186,7 @@ export const FALLBACK_PROS = [
     ],
     userId: {
       name: 'Tapan Karmakar',
-      avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=250&q=80',
+      avatar: '/avatars/pro_plumb_2.jpg',
     },
   },
 
@@ -217,7 +217,7 @@ export const FALLBACK_PROS = [
     ],
     userId: {
       name: 'Rina Banerjee',
-      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=250&q=80',
+      avatar: '/avatars/pro_clean_1.jpg',
     },
   },
   {
@@ -246,7 +246,7 @@ export const FALLBACK_PROS = [
     ],
     userId: {
       name: 'Pooja Paul',
-      avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=250&q=80',
+      avatar: '/avatars/pro_clean_2.jpg',
     },
   },
 
@@ -277,7 +277,7 @@ export const FALLBACK_PROS = [
     ],
     userId: {
       name: 'Gourab Sutradhar',
-      avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=250&q=80',
+      avatar: '/avatars/pro_carp_1.jpg',
     },
   },
   {
@@ -306,7 +306,7 @@ export const FALLBACK_PROS = [
     ],
     userId: {
       name: 'Bikash Sharma',
-      avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=250&q=80',
+      avatar: '/avatars/pro_carp_2.jpg',
     },
   },
 
@@ -337,7 +337,7 @@ export const FALLBACK_PROS = [
     ],
     userId: {
       name: 'Sanjay Dutta',
-      avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=250&q=80',
+      avatar: '/avatars/pro_paint_1.jpg',
     },
   },
   {
@@ -366,7 +366,7 @@ export const FALLBACK_PROS = [
     ],
     userId: {
       name: 'Manoj Mondal',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
+      avatar: '/avatars/pro_paint_2.jpg',
     },
   },
 
@@ -397,7 +397,7 @@ export const FALLBACK_PROS = [
     ],
     userId: {
       name: 'Dr. Anirban Sen',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+      avatar: '/avatars/pro_pest_1.jpg',
     },
   },
   {
@@ -426,7 +426,7 @@ export const FALLBACK_PROS = [
     ],
     userId: {
       name: 'Biplab Roy',
-      avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=250&q=80',
+      avatar: '/avatars/pro_pest_2.jpg',
     },
   },
 
@@ -457,7 +457,7 @@ export const FALLBACK_PROS = [
     ],
     userId: {
       name: 'Indranil Chatterjee',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80',
+      avatar: '/avatars/pro_smart_1.jpg',
     },
   },
   {
@@ -486,7 +486,7 @@ export const FALLBACK_PROS = [
     ],
     userId: {
       name: 'Soumen Bose',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
+      avatar: '/avatars/pro_smart_2.jpg',
     },
   },
 ];

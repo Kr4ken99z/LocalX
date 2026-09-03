@@ -200,7 +200,14 @@ export default function AdminDashboard() {
   const [professionals, setProfessionals] = useState(() => {
     try {
       const saved = localStorage.getItem('localx_admin_pros');
-      return saved ? JSON.parse(saved) : INITIAL_DEMO_PROS;
+      const loaded = saved ? JSON.parse(saved) : INITIAL_DEMO_PROS;
+      return loaded.map((p) => ({
+        ...p,
+        userId: {
+          ...p.userId,
+          avatar: `/avatars/${p._id}.jpg`,
+        },
+      }));
     } catch {
       return INITIAL_DEMO_PROS;
     }
