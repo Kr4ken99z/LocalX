@@ -19,6 +19,7 @@ import { detectSmartLocation } from '../utils/locationHelper';
 import TrustScoreBadge from '../components/TrustScoreBadge';
 import LeafletMap from '../components/LeafletMap';
 import BookingModal from '../components/BookingModal';
+import { FALLBACK_CATEGORIES, FALLBACK_PROS } from '../utils/mockData';
 
 const cityCoordinatesMap = {
   Kolkata: [22.5726, 88.3639],
@@ -31,9 +32,9 @@ const cityCoordinatesMap = {
 
 export default function ExplorePage({ selectedCity = 'Kolkata', onSelectCity }) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [professionals, setProfessionals] = useState([]);
-  const [services, setServices] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [professionals, setProfessionals] = useState(FALLBACK_PROS);
+  const [services, setServices] = useState(FALLBACK_CATEGORIES);
+  const [loading, setLoading] = useState(false);
 
   // Filters State
   const initialCity = searchParams.get('city') || selectedCity || 'Kolkata';
@@ -55,9 +56,11 @@ export default function ExplorePage({ selectedCity = 'Kolkata', onSelectCity }) 
 
   useEffect(() => {
     // Fetch categories
-    axios.get('/api/services').then((res) => {
-      if (res.data.success) setServices(res.data.data);
-    });
+    axios.get('/api/services')
+      .then((res) => {
+        if (res.data?.success && res.data.data?.length > 0) setServices(res.data.data);
+      })
+      .catch(() => setServices(FALLBACK_CATEGORIES));
   }, []);
 
   useEffect(() => {
@@ -73,20 +76,25 @@ export default function ExplorePage({ selectedCity = 'Kolkata', onSelectCity }) 
           sort: sortBy,
         };
 
-        const res = await axios.get('/api/professionals', { params });
-        if (res.data.success) {
-          // If city filter returned 0 (e.g. newly typed city), also offer fallback
-          if (res.data.data.length === 0 && search) {
-            const fallbackRes = await axios.get('/api/professionals', {
-              params: { search, service: selectedService !== 'all' ? selectedService : undefined, sort: sortBy },
-            });
-            if (fallbackRes.data.success) setProfessionals(fallbackRes.data.data);
-          } else {
-            setProfessionals(res.data.data);
+        const res = await axios.get('/api/professionals', { params }).catch(() => null);
+        if (res?.data?.success && res.data.data?.length > 0) {
+          setProfessionals(res.data.data);
+        } else {
+          // Filter fallback data client-side
+          let list = [...FALLBACK_PROS];
+          if (verifiedOnly) list = list.filter((p) => p.verificationStatus === 'VERIFIED');
+          if (minRating > 0) list = list.filter((p) => p.rating >= minRating);
+          if (selectedService !== 'all') {
+            list = list.filter((p) => p.services?.some((s) => s.slug === selectedService) || p.skills?.includes(selectedService));
           }
+          if (search) {
+            const q = search.toLowerCase();
+            list = list.filter((p) => p.businessName?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q));
+          }
+          setProfessionals(list);
         }
       } catch (err) {
-        console.error('Fetch professionals error:', err);
+        setProfessionals(FALLBACK_PROS);
       } finally {
         setLoading(false);
       }

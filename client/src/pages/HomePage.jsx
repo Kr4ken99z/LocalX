@@ -19,13 +19,14 @@ import {
 } from 'lucide-react';
 import { detectSmartLocation } from '../utils/locationHelper';
 import TrustScoreBadge from '../components/TrustScoreBadge';
+import { FALLBACK_CATEGORIES, FALLBACK_PROS } from '../utils/mockData';
 
 export default function HomePage({ selectedCity = 'Kolkata', onSelectCity }) {
   const navigate = useNavigate();
-  const [services, setServices] = useState([]);
-  const [featuredPros, setFeaturedPros] = useState([]);
+  const [services, setServices] = useState(FALLBACK_CATEGORIES);
+  const [featuredPros, setFeaturedPros] = useState(FALLBACK_PROS.slice(0, 4));
   const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
 
   const demoCities = ['Kolkata', 'Bengaluru', 'Mumbai', 'Delhi NCR', 'Hyderabad', 'Pune'];
@@ -34,22 +35,24 @@ export default function HomePage({ selectedCity = 'Kolkata', onSelectCity }) {
     const fetchData = async () => {
       try {
         const [servicesRes, prosRes] = await Promise.all([
-          axios.get('/api/services'),
-          axios.get(`/api/professionals?city=${encodeURIComponent(selectedCity)}&sort=rating`),
+          axios.get('/api/services').catch(() => null),
+          axios.get(`/api/professionals?city=${encodeURIComponent(selectedCity)}&sort=rating`).catch(() => null),
         ]);
 
-        if (servicesRes.data.success) setServices(servicesRes.data.data);
-        if (prosRes.data.success) {
-          // If no pros found in this city, fallback to all top-rated
-          if (prosRes.data.data.length > 0) {
-            setFeaturedPros(prosRes.data.data.slice(0, 4));
-          } else {
-            const allProsRes = await axios.get('/api/professionals?sort=rating');
-            if (allProsRes.data.success) setFeaturedPros(allProsRes.data.data.slice(0, 4));
-          }
+        if (servicesRes?.data?.success && servicesRes.data.data?.length > 0) {
+          setServices(servicesRes.data.data);
+        } else {
+          setServices(FALLBACK_CATEGORIES);
+        }
+
+        if (prosRes?.data?.success && prosRes.data.data?.length > 0) {
+          setFeaturedPros(prosRes.data.data.slice(0, 4));
+        } else {
+          setFeaturedPros(FALLBACK_PROS.slice(0, 4));
         }
       } catch (err) {
-        console.error('HomePage fetch error:', err);
+        setServices(FALLBACK_CATEGORIES);
+        setFeaturedPros(FALLBACK_PROS.slice(0, 4));
       } finally {
         setLoading(false);
       }
