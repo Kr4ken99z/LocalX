@@ -1793,8 +1793,8 @@ export default function AdminDashboard() {
                             </button>
                           )}
 
-                          {/* Admin Cancel with Reason Button */}
-                          {b.status !== 'CANCELLED' && (
+                          {/* Admin Cancel with Reason Button (Only for active/upcoming bookings, not completed or cancelled) */}
+                          {b.status !== 'CANCELLED' && b.status !== 'COMPLETED' && (
                             <button
                               type="button"
                               onClick={() => {
